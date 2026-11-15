@@ -21,8 +21,9 @@ PRE_CROP_DAYS: int = 120
 KC_FALLOW: float = 0.20
 KC_PRE_CROP: float = 0.90
 
-# Fracción de agotamiento inicial de TAW al inicio del spin-up (§4.4)
+# Fracción de agotamiento inicial de TAW y p de referencia durante spin-up (§4.4)
 DR0_FRAC: float = 0.5
+P_SPINUP: float = 0.5
 
 # Restricciones temporales de rotación en días (§4.1, §4.6)
 GAP_CROP_MAX_DAYS: int = 30

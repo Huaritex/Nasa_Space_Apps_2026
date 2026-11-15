@@ -134,6 +134,7 @@ Usando el producto satelital **`MOD13Q1 v061`** (250 m, compuestos de 16 días, 
   - Función trapezoidal de **FAO EcoCrop** ($f_{temp}$) sobre la temperatura media del ciclo.
   - Penalización por estrés calórico en la ventana crítica de floración $[t_{mid}-5, t_{mid}+25)$ días según umbrales críticos de **Teixeira et al. (2013)** ($f_{calor}$).
   - Penalización escalonada por heladas ($T_{min} \le 0$ °C): $0.3$ en ventana sensible y $0.7$ en fase vegetativa ($f_{helada}$).
+- **Catálogo Agronómico Verificado (`T0.5` completada)**: Los 13 cultivos y sus 130 campos agronómicos en [crops.json](file:///home/huaritex/Escritorio/Nasa_Space_Apps_2026/backend/app/data/crops.json) cuentan con cotejo completo (`"verificar": false`, `0` parámetros pendientes) contra **FAO-56** (Tablas 11, 12, 22 y 24), **FAO EcoCrop**, **Teixeira et al. (2013)** y los supuestos documentados **`S6`–`S9`**.
 - **Regímenes de Comparación Climática**:
   - Unidad de análisis: **Campaña agrícola** (empieza el 1-julio en hemisferio sur, 1-enero en hemisferio norte; nunca se agrupa por año calendario).
   - Particiones temporales de 15 años: `before` (primeras 15 campañas, ej. 1991/92–2005/06) vs `recent` (últimas 15 campañas, ej. 2010/11–2024/25).
@@ -177,7 +178,7 @@ uvicorn app.main:app --reload --port 8000
 
 El backend expondrá inmediatamente:
 - `GET http://localhost:8000/health`: Verificación de salud (`{"status": "ok"}`).
-- `GET http://localhost:8000/crops`: Catálogo agronómico de los 13 cultivos con parámetros FAO-56/EcoCrop y banderas de verificación.
+- `GET http://localhost:8000/crops`: Catálogo agronómico de los 13 cultivos con parámetros FAO-56/EcoCrop y banderas de verificación (`T0.5` completada: `0` parámetros pendientes).
 - `POST http://localhost:8000/analyze`: Endpoint principal de simulación de rotaciones.
 - `GET http://localhost:8000/docs`: Interfaz Swagger UI para exploración interactiva de la API.
 
@@ -369,7 +370,7 @@ Nasa_Space_Apps_2026/
 │   │   ├── schemas.py        # Modelos de datos Pydantic v2 (contratos de API)
 │   │   ├── pipeline.py       # Pipeline de simulación biofísica y orquestación
 │   │   ├── data/
-│   │   │   ├── crops.json    # Catálogo agronómico de 13 cultivos con fuentes y verificación
+│   │   │   ├── crops.json    # Catálogo agronómico de 13 cultivos (T0.5 verificado: 0 pendientes)
 │   │   │   └── crops.py      # Cargador y validaciones del catálogo
 │   │   ├── nasa/
 │   │   │   ├── power.py      # Cliente de NASA POWER, caché en disco y conversiones

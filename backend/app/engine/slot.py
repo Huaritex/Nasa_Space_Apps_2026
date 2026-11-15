@@ -16,11 +16,14 @@ from app.config import (
     FROST_VEG_OFFSET,
     KC_FALLOW,
     KC_PRE_CROP,
+    LIMITING_THRESHOLD,
     P_MAX,
     P_MIN,
+    P_SPINUP,
     PRE_CROP_DAYS,
     SMALL_RAIN_FRAC,
     SPINUP_DAYS,
+    TOLERANCE_TIE,
 )
 from app.data.crops import Crop
 from app.engine.calendar import get_hemisphere, get_valid_seasons, parse_sow_date
@@ -283,7 +286,7 @@ def simulate_slot(
     for idx in range(SPINUP_DAYS):
         t = idx - SPINUP_DAYS
         kc_val = KC_PRE_CROP if (prev_mode == "crop" and t >= -PRE_CROP_DAYS) else KC_FALLOW
-        p_tab_val = 0.5
+        p_tab_val = P_SPINUP
         prec_t = prec_mat[idx, :]
         et0_t = et0_mat[idx, :]
 
@@ -357,10 +360,10 @@ def simulate_slot(
 
         f_vals = [float(f_agua[m]), float(f_calor[m]), float(f_helada[m]), float(f_temp[m])]
         min_val = min(f_vals)
-        if min_val < 0.95:
+        if min_val < LIMITING_THRESHOLD:
             chosen = "ninguno"
             for name, val in zip(order, f_vals):
-                if abs(val - min_val) < 1e-9:
+                if abs(val - min_val) < TOLERANCE_TIE:
                     chosen = name
                     break
             limiting.append(chosen)

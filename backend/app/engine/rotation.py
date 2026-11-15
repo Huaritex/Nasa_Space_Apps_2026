@@ -309,7 +309,11 @@ def evaluate_rotation(
             slot_y_all = res.y_rel[season_indices]
             slot_y_eval = slot_y_all[eval_indices] if len(eval_indices) > 0 else slot_y_all
 
-            mean_yield = float(np.mean(slot_y_eval)) if len(slot_y_eval) > 0 else 0.0
+            mean_yield = (
+                float(np.nanmean(slot_y_eval))
+                if (len(slot_y_eval) > 0 and np.any(~np.isnan(slot_y_eval)))
+                else 0.0
+            )
             failures = int(np.sum(slot_y_eval < SLOT_FAIL))
 
             year_slots_out.append(
@@ -345,13 +349,15 @@ def evaluate_rotation(
     mala_before = mala_arr[before_indices] if len(before_indices) > 0 else mala_arr
     mala_recent = mala_arr[recent_indices] if len(recent_indices) > 0 else mala_arr
 
-    mean_index = float(np.mean(i_eval)) if len(i_eval) > 0 else 0.0
+    has_valid_i = len(i_eval) > 0 and np.any(~np.isnan(i_eval))
+    has_valid_p = len(p_eval) > 0 and np.any(~np.isnan(p_eval))
+    mean_index = float(np.nanmean(i_eval)) if has_valid_i else 0.0
     p10_index = (
-        float(np.percentile(i_eval, P10_PERCENTILE, method="linear"))
-        if len(i_eval) > 0
+        float(np.nanpercentile(i_eval, P10_PERCENTILE, method="linear"))
+        if has_valid_i
         else 0.0
     )
-    mean_productivity = float(np.mean(p_eval)) if len(p_eval) > 0 else 0.0
+    mean_productivity = float(np.nanmean(p_eval)) if has_valid_p else 0.0
     productivity_vs_current = PERCENT_BASE
     bad_seasons = int(np.sum(mala_eval))
     n_seasons = len(eval_indices) if len(eval_indices) > 0 else len(seasons)

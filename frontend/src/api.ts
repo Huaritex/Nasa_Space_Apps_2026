@@ -60,19 +60,19 @@ export async function checkBackendLive(): Promise<boolean> {
  * 13 canonical crops static fallback when backend is unreachable offline.
  */
 export const STATIC_CROPS: CropSummary[] = [
-  { id: "soya", nombre: "Soya", familia: "Fabaceae", cosechable: true, n_verificar_pendientes: 10, unverified_count: 10 },
-  { id: "maiz", nombre: "Maíz", familia: "Poaceae", cosechable: true, n_verificar_pendientes: 10, unverified_count: 10 },
-  { id: "sorgo", nombre: "Sorgo", familia: "Poaceae", cosechable: true, n_verificar_pendientes: 10, unverified_count: 10 },
-  { id: "trigo", nombre: "Trigo", familia: "Poaceae", cosechable: true, n_verificar_pendientes: 10, unverified_count: 10 },
-  { id: "girasol", nombre: "Girasol", familia: "Asteraceae", cosechable: true, n_verificar_pendientes: 10, unverified_count: 10 },
-  { id: "frijol", nombre: "Frijol", familia: "Fabaceae", cosechable: true, n_verificar_pendientes: 10, unverified_count: 10 },
-  { id: "mani", nombre: "Maní", familia: "Fabaceae", cosechable: true, n_verificar_pendientes: 10, unverified_count: 10 },
-  { id: "algodon", nombre: "Algodón", familia: "Malvaceae", cosechable: true, n_verificar_pendientes: 10, unverified_count: 10 },
-  { id: "cebada", nombre: "Cebada", familia: "Poaceae", cosechable: true, n_verificar_pendientes: 10, unverified_count: 10 },
-  { id: "papa", nombre: "Papa", familia: "Solanaceae", cosechable: true, n_verificar_pendientes: 10, unverified_count: 10 },
-  { id: "mijo", nombre: "Mijo", familia: "Poaceae", cosechable: true, n_verificar_pendientes: 10, unverified_count: 10 },
-  { id: "avena_cob", nombre: "Avena (cobertura)", familia: "Poaceae", cosechable: false, n_verificar_pendientes: 10, unverified_count: 10 },
-  { id: "crotalaria", nombre: "Crotalaria", familia: "Fabaceae", cosechable: false, n_verificar_pendientes: 10, unverified_count: 10 },
+  { id: "soya", nombre: "Soya", familia: "Fabaceae", cosechable: true, n_verificar_pendientes: 0, unverified_count: 0 },
+  { id: "maiz", nombre: "Maíz", familia: "Poaceae", cosechable: true, n_verificar_pendientes: 0, unverified_count: 0 },
+  { id: "sorgo", nombre: "Sorgo", familia: "Poaceae", cosechable: true, n_verificar_pendientes: 0, unverified_count: 0 },
+  { id: "trigo", nombre: "Trigo", familia: "Poaceae", cosechable: true, n_verificar_pendientes: 0, unverified_count: 0 },
+  { id: "girasol", nombre: "Girasol", familia: "Asteraceae", cosechable: true, n_verificar_pendientes: 0, unverified_count: 0 },
+  { id: "frijol", nombre: "Frijol", familia: "Fabaceae", cosechable: true, n_verificar_pendientes: 0, unverified_count: 0 },
+  { id: "mani", nombre: "Maní", familia: "Fabaceae", cosechable: true, n_verificar_pendientes: 0, unverified_count: 0 },
+  { id: "algodon", nombre: "Algodón", familia: "Malvaceae", cosechable: true, n_verificar_pendientes: 0, unverified_count: 0 },
+  { id: "cebada", nombre: "Cebada", familia: "Poaceae", cosechable: true, n_verificar_pendientes: 0, unverified_count: 0 },
+  { id: "papa", nombre: "Papa", familia: "Solanaceae", cosechable: true, n_verificar_pendientes: 0, unverified_count: 0 },
+  { id: "mijo", nombre: "Mijo", familia: "Poaceae", cosechable: true, n_verificar_pendientes: 0, unverified_count: 0 },
+  { id: "avena_cob", nombre: "Avena (cobertura)", familia: "Poaceae", cosechable: false, n_verificar_pendientes: 0, unverified_count: 0 },
+  { id: "crotalaria", nombre: "Crotalaria", familia: "Fabaceae", cosechable: false, n_verificar_pendientes: 0, unverified_count: 0 },
 ];
 
 /**

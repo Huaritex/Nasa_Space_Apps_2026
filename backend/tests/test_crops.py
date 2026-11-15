@@ -21,7 +21,7 @@ def test_T0_4_load_all_13_crops():
 
 
 def test_T0_4_agronomic_fields_fuente_and_verificar():
-    """PLAN §2.4 — Todo campo agronómico debe tener fuente no vacía y verificar=True en la semilla."""
+    """PLAN §2.4 y T0.5 — Todo campo agronómico debe tener fuente no vacía y verificar=False tras T0.5."""
     with open(DEFAULT_CROPS_PATH, "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -34,7 +34,9 @@ def test_T0_4_agronomic_fields_fuente_and_verificar():
             assert "fuente" in entry and isinstance(entry["fuente"], str) and entry["fuente"].strip(), (
                 f"Cultivo {cid} campo {afield} tiene fuente vacía"
             )
-            assert entry["verificar"] is True, f"Cultivo {cid} campo {afield} no tiene verificar=True"
+            assert entry["verificar"] is False, (
+                f"Cultivo {cid} campo {afield} aún tiene verificar=True tras T0.5"
+            )
 
 
 def test_T0_4_crop_stages_sum_to_cycle():
@@ -94,7 +96,7 @@ def test_T0_4_flat_crop_properties():
     assert soya.p == 0.50
     assert soya.ky == 0.85
     assert soya.t_helada == 0.0
-    assert soya.n_verificar_pendientes == 10
+    assert soya.n_verificar_pendientes == 0
 
 
 def test_T0_4_cover_crops_properties():
