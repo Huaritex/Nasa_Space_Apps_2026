@@ -90,7 +90,7 @@
 
 ---
 
-## Parte III — Banco de Q&A Técnico y Agronómico (14 Preguntas Difíciles)
+## Parte III — Banco de Q&A Técnico y Agronómico (15 Preguntas Difíciles)
 
 ### 1. *"¿Por qué no usaron Machine Learning o un LLM para recomendar rotaciones y redactar explicaciones?"*
 * **Respuesta técnica:** Porque un agricultor no puede tomar decisiones de capital sobre una caja negra que alucina cifras o sobreajustar un modelo a 34 observaciones históricas por punto. En RotaClima **todo es determinista y reproducible byte a byte**: cada fórmula biofísica está fijada en código ([PLAN.md](file:///home/huaritex/Escritorio/Nasa_Space_Apps_2026/PLAN.md) §4), cada constante numérica está centralizada en [config.py](file:///home/huaritex/Escritorio/Nasa_Space_Apps_2026/backend/app/config.py) (incluyendo `P_SPINUP`, `LIMITING_THRESHOLD` y `TOLERANCE_TIE` usados en [slot.py](file:///home/huaritex/Escritorio/Nasa_Space_Apps_2026/backend/app/engine/slot.py), y agregaciones con `np.nanmean`/`np.nanpercentile` en [rotation.py](file:///home/huaritex/Escritorio/Nasa_Space_Apps_2026/backend/app/engine/rotation.py)) y cada frase de la ficha se genera desde plantillas con un invariante testeado: toda cifra en `text` existe literalmente en `evidence[].value` trazada a los parámetros POWER que la produjeron. Esto se encuentra respaldado por una suite de **159 tests automatizados de backend en verde (100% pasando)**.
@@ -161,3 +161,12 @@
 * **Respuesta técnica:** En [alternatives.py](file:///home/huaritex/Escritorio/Nasa_Space_Apps_2026/backend/app/engine/alternatives.py) (`PLAN.md` §5.3), `Diversificada` busca ciclos de **2 años** con $\ge 3$ familias botánicas y $\ge 3$ cultivos cosechables distintos que no empeoren `bad_seasons` ni `soil.total` respecto a la actual. En Santa Cruz elige **`algodon@09-16 + sorgo@04-01 | mijo@11-16 + girasol@03-16`** (3 familias: Malvaceae, Poaceae, Asteraceae):
   - **Ventaja:** Alcanza la **máxima productividad comercial (`115.37%` vs actual, `mean_productivity = 1.7638`, `mean_index = 0.8819`)** con **`0 de 20` campañas malas** y **`82.88%`** de protección frente a escorrentía.
   - **Trade-off declarado al productor:** Su puntaje de suelo total es **`60.56 / 100`** (menor que `Regenerativa` con **`79.03 / 100`**), específicamente porque al excluir leguminosas su subíndice de nitrógeno cae a **`10.0 / 100`** (vs `45.0` en `Regenerativa` y `80.0` en doble soya). El productor elige con información completa entre **máxima rentabilidad comercial diversificada (`Diversificada`)**, **cambio mínimo (`Adaptada`, `112.36%`, suelo `63.82`)** o **máxima restauración edáfica (`Regenerativa`, `86.30%`, suelo `79.03`)**.
+
+### 15. *"¿Cómo planean hacer sostenible el proyecto después del hackathon sin cerrar los datos abiertos de la NASA?"*
+* **Respuesta técnica y de negocio (Modelo Abierto al Productor + B2B Institucional):**
+  - **Para el agricultor individual (100% gratuito, anónimo y completo):** Nunca cobramos por acceder a datos públicos de NASA (`POWER`/`MODIS`) ni recortamos fórmulas biofísicas o transparencia estadística (`p-valores` y supuestos `S1–S12`) en una versión "capada", porque eso rompe la confianza en campo y contradice *Open Science*.
+  - **Sostenibilidad vía B2B (Cooperativas, Aseguradoras agrícolas, Bancos rurales y Semilleras):** El valor comercial real reside en escala, calibración privada y resolución operativa fuera del motor base:
+    1. **Escala espacial por polígono:** integración de lluvia de alta resolución (`CHIRPS ~5 km` / `IMERG ~10 km`) y series satelitales (`MODIS`/`Sentinel-2`) agregadas al polígono real de múltiples lotes (evitando el ruido de 1 píxel puntual).
+    2. **Ponderación prospectiva transparente:** ponderación de campañas históricas análogas según fase **ENSO (`ONI`)** o ensambles estacionales (`NMME`), manteniendo trazabilidad determinista sin cajas negras.
+    3. **Calibración privada y márgenes locales:** ajuste de `GDD`, $K_y$, acople dinámico suelo-agua y precios/costos por hectárea usando registros reales de cosecha de la cooperativa o cartera de crédito.
+    4. **Infraestructura por volumen:** capa delgada externa a `engine/` (`X-API-Key` + endpoint `/analyze/batch` multi-lote) para evaluar miles de parcelas en cartera.
