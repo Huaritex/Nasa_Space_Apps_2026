@@ -29,6 +29,8 @@ RotaClima compares a farmer's current crop rotation with up to three alternative
 14. [Documentation and translations](#14-documentation-and-translations)
 15. [Glossary](#15-glossary)
 16. [References](#16-references)
+17. [Target audience and users](#17-target-audience-and-users)
+18. [Sustainability, business model, and scaling](#18-sustainability-business-model-and-scaling)
 
 ---
 
@@ -517,3 +519,55 @@ Generated and ignored by git: `backend/cache/`, `backend/.venv/`, `frontend/node
 - FAO ECOCROP database (temperature suitability ranges).
 - NASA POWER (Prediction Of Worldwide Energy Resources), Langley Research Center. Datasets MERRA-2 and CERES SYN1deg.
 - MODIS MOD13Q1 v061, 250 m, 16-day NDVI, accessed through the ORNL DAAC subset API.
+
+---
+
+## 17. Target audience and users
+
+RotaClima separates **who benefits from the decision** from **who operates the interface today**, avoiding the common mistake of assuming every smallholder farmer reads statistical output directly:
+
+1. **Primary operators today (current MVP):**
+   - **Field agronomists, cooperative technical advisors, and rural extensionists (e.g., INIAF, NGOs):** They already understand `ET0`, flowering heat stress, relative yield indices (`I`), and soil-health trade-offs. They use RotaClima in 3 clicks as a climate-auditing dashboard to sit alongside the farmer and back up rotation changes with 35 years of NASA evidence.
+   - **Agricultural risk & credit analysts (rural banks, parametric/crop insurers):** They need transparent, auditable historical risk metrics (`bad seasons in X of 20`, limiting factor `water` vs `heat`, Mann-Whitney `p`-values) without black-box ML.
+   - **Tech-enabled commercial farmers:** Medium and large producers who already work with agronomic advisors and want to verify how rainfall onset and extreme heat have shifted in their zone.
+
+2. **End beneficiary:**
+   - **The farmer / agricultural producer:** Always has free, anonymous, zero-paywall access to public NASA climate diagnostics and rotation comparisons.
+
+3. **Institutional & public-sector users (roadmap):**
+   - **Ministries of Agriculture, municipalities, and multilateral adaptation programs:** For dynamic agro-ecological zoning, climate-adaptation diagnostics, and extension planning.
+   - **Seed companies and grain cooperatives:** For regional variety positioning under shifting rainfall windows.
+
+4. **Future direct-to-farmer UX ("Producer Mode"):**
+   - Today's UI exposes scientific terminology (`I = 0.5541`, `P10`, Mann-Whitney `p`, Spearman `ρ`) and biophysical relative yield without local crop prices (`S10`). A dedicated simplified mode is planned to hide statistical notation and pair risk counts (*"bad season in X of 10 years"*) with local market prices and gross margins (`$/ha`).
+
+---
+
+## 18. Sustainability, business model, and scaling
+
+RotaClima follows a **two-layer Open Science + B2B model** that keeps public NASA data free for individual producers while monetizing institutional risk and scale.
+
+### 1. How it sustains itself (Open Science + B2B)
+
+| Layer | Status | Who it serves | What it includes |
+|---|---|---|---|
+| **Layer 1: Open Science (Public Good)** | **Live today** (`GET /health`, `GET /crops`, `POST /analyze`) | Individual farmers, extensionists, students, researchers | 100% free, anonymous, no login, no paywall; full `p`-values, evidence trails, and declared limits (`S1–S12`); low-cost static frontend + stateless API. |
+| **Layer 2: Institutional B2B** | **Planned roadmap** *(not yet in `main.py`)* | Crop insurers, rural banks, cooperatives, seed companies, public agencies | Polygon-scale climate/NDVI, seasonal ENSO weighting, private yield/margin calibration, and multi-parcel batch API. |
+
+**Why institutions pay:**
+- **Crop & parametric insurers** need historical drought/heat risk pricing across thousands of insured parcels without manual agronomic calibration.
+- **Rural banks & microfinance** need climate-adjusted credit scoring (e.g., differentiating a monoculture exposed to heat stress from a diversified rotation with `0/20` bad seasons).
+- **Cooperatives & grain originators** need to plan seed inventory, credit lines, and technical assistance across whole districts.
+
+### 2. How it scales (technical, agronomic, and geographic)
+
+1. **Geographic scaling (already supported by data source):**
+   - NASA POWER provides global daily coverage (`-90..90`, `-180..180`), and the engine automatically adapts agricultural season start dates by hemisphere (`1 July` for `lat < 0`, `1 January` for `lat >= 0`).
+   - Coordinate rounding (`0.01°`) with disk caching (`power.py`) plus SHA-256 request caching (`pipeline.py`) prevents redundant NASA POWER downloads as user volume grows.
+2. **Spatial & seasonal scaling (B2B roadmap):**
+   - **Higher spatial resolution:** Move from the `~50 km` regional POWER grid (`S1`) to parcel/polygon scale using `CHIRPS (~5 km)` / `IMERG (~10 km)` precipitation and `MODIS` / `Sentinel-2` vegetation layers.
+   - **Prospective seasonal weighting:** Add `ENSO (ONI)` phase and `NMME` seasonal forecast weighting on top of the 20-season deterministic backtest.
+   - **Batch infrastructure:** Expose a thin `POST /analyze/batch` endpoint with `X-API-Key` authentication over the existing deterministic `engine/` to score thousands of polygons per request.
+3. **Agronomic & local-market scaling:**
+   - **Private & local calibration:** Allow cooperatives and research stations (e.g., INIAF) to calibrate local cultivar `GDD`, `Ky`, photoperiod sensitivity (`S3`), and regional `$/ha` gross margins (`S10`) so alternatives reflect commercial viability as well as biophysical resilience.
+   - **Dynamic MODIS windows & low-connectivity field use:** Anchor satellite backtest windows dynamically to simulated rainfall `onset`, and export lightweight offline/PDF extension briefs for rural areas with intermittent connectivity.
