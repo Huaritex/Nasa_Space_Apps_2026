@@ -2,6 +2,8 @@
 
 **Language:** English · [Español](docs/i18n/es/README.md) · [Português (Brasil)](docs/i18n/pt-BR/README.md) · [中文（简体）](docs/i18n/zh-CN/README.md)
 
+**Live Demo:** [https://nasaspaceapps2026-ivory.vercel.app](https://nasaspaceapps2026-ivory.vercel.app)
+
 > Agronomic decision-support tool for crop-rotation planning under climate change.
 > Built for the NASA Space Apps Challenge 2026, challenge **"Field Shift"**.
 
