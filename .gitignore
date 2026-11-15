@@ -75,3 +75,8 @@ Thumbs.db
 
 # Teamwork agent state / scratch
 .agents/
+
+# Local presentation scripts & jury evaluation notes
+guion_*.md
+evaluacion_jurado_guion_defensa_qa.md
+
