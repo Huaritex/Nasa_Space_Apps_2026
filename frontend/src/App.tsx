@@ -7,7 +7,7 @@ import type {
   SoilTexture,
   SowDate,
 } from "./types";
-import { fetchCrops, analyzeRotation, loadDemoSantaCruz, ApiError } from "./api";
+import { fetchCrops, analyzeRotation, loadDemoSantaCruz, checkBackendLive, ApiError } from "./api";
 import { MapForm } from "./views/MapForm";
 import { ClimateShift } from "./views/ClimateShift";
 import { Compare } from "./views/Compare";
@@ -51,21 +51,54 @@ export const App: React.FC = () => {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [showAssumptions, setShowAssumptions] = useState<boolean>(false);
 
-  // Load crop catalog and initial demo data on mount
+  // Check backend and load initial simulation data on mount
   useEffect(() => {
     let isMounted = true;
     async function init() {
-      const loadedCrops = await fetchCrops();
+      // 1. Check if backend is reachable
+      const isLive = await checkBackendLive();
       if (!isMounted) return;
-      setCrops(loadedCrops);
 
-      try {
-        const demo = await loadDemoSantaCruz();
+      if (isLive) {
+        // Backend is reachable: fetch live crops catalog
+        const loadedCrops = await fetchCrops();
         if (!isMounted) return;
-        setAnalyzeData(demo);
-        setIsOffline(true);
-      } catch (err) {
-        console.warn("No se pudo precargar demo inicial:", err);
+        setCrops(loadedCrops);
+
+        // Attempt live simulation for Santa Cruz default coordinates
+        try {
+          const result = await analyzeRotation({
+            lat: SANTA_CRUZ_DEFAULT.lat,
+            lon: SANTA_CRUZ_DEFAULT.lon,
+            soil_texture: SANTA_CRUZ_DEFAULT.soil,
+            current_rotation: SANTA_CRUZ_DEFAULT.rotation,
+            include_diversified: false,
+          });
+          if (!isMounted) return;
+          setAnalyzeData(result.data);
+          setIsOffline(result.offline); // false when live backend succeeds
+        } catch (err) {
+          console.warn("Backend en vivo no pudo completar la simulación inicial, usando demo precacheada:", err);
+          const demo = await loadDemoSantaCruz();
+          if (!isMounted) return;
+          setAnalyzeData(demo);
+          setIsOffline(true);
+        }
+      } else {
+        // Backend is unreachable: use offline static crops and precached demo
+        console.info("Backend no disponible. Iniciando en modo demo offline.");
+        const loadedCrops = await fetchCrops();
+        if (!isMounted) return;
+        setCrops(loadedCrops);
+
+        try {
+          const demo = await loadDemoSantaCruz();
+          if (!isMounted) return;
+          setAnalyzeData(demo);
+          setIsOffline(true);
+        } catch (err) {
+          console.warn("No se pudo precargar demo inicial:", err);
+        }
       }
     }
     init();
@@ -112,6 +145,11 @@ export const App: React.FC = () => {
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 422) {
         setValidationError(err.detail);
+        setActiveTab("map");
+      } else if (err instanceof ApiError && err.status === 503) {
+        setValidationError(
+          `Servicio NASA POWER no disponible (HTTP 503): ${err.detail}`
+        );
         setActiveTab("map");
       } else {
         const message = err instanceof Error ? err.message : String(err);

@@ -19,6 +19,7 @@ const API_BASE = import.meta.env.VITE_API_URL
 export interface AnalyzeResult {
   data: AnalyzeResponse;
   offline: boolean;
+  isDemo?: boolean;
 }
 
 export class ApiError extends Error {
@@ -30,6 +31,28 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
     this.detail = detail;
+  }
+}
+
+/**
+ * Checks if coordinates correspond to the Santa Cruz demo preset (-17.30, -62.25).
+ */
+export function isSantaCruzPreset(lat: number, lon: number): boolean {
+  return Math.abs(lat - (-17.3)) < 0.01 && Math.abs(lon - (-62.25)) < 0.01;
+}
+
+/**
+ * Checks if the backend is reachable via GET /crops.
+ */
+export async function checkBackendLive(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/crops`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    return res.ok;
+  } catch {
+    return false;
   }
 }
 
@@ -78,6 +101,7 @@ export async function fetchCrops(): Promise<CropSummary[]> {
 
 /**
  * Loads the precached Santa Cruz demo response from public/demo_santa_cruz.json.
+ * Unequivocally labels the response data as demo data.
  */
 export async function loadDemoSantaCruz(): Promise<AnalyzeResponse> {
   const basePath = import.meta.env.BASE_URL || "/";
@@ -86,7 +110,11 @@ export async function loadDemoSantaCruz(): Promise<AnalyzeResponse> {
   if (!res.ok) {
     throw new Error(`No se pudo cargar el fixture demo (${demoUrl}): HTTP ${res.status}`);
   }
-  return (await res.json()) as AnalyzeResponse;
+  const data = (await res.json()) as AnalyzeResponse;
+  if (data.meta && !data.meta.resolution_note.includes("[DEMO OFFLINE]")) {
+    data.meta.resolution_note = `[DEMO OFFLINE] ${data.meta.resolution_note}`;
+  }
+  return data;
 }
 
 /**
@@ -95,7 +123,12 @@ export async function loadDemoSantaCruz(): Promise<AnalyzeResponse> {
  * Rules:
  * 1. Sends POST /analyze with properly structured AnalyzeRequest.
  * 2. If the backend responds with HTTP 422, extracts the Spanish detail message and THROWS ApiError (never falls back to demo).
- * 3. If a network failure occurs (backend offline, connection refused, failed to fetch), falls back to demo_santa_cruz.json with offline=true.
+ * 3. If the backend responds with HTTP 503 (NASA POWER unavailable):
+ *    - For arbitrary coordinates, propagates ApiError(503) so the user is informed without faking coordinates.
+ *    - For the Santa Cruz preset, falls back to demo_santa_cruz.json labeled as demo data.
+ * 4. If network failure occurs (backend offline, connection refused, failed to fetch):
+ *    - For arbitrary coordinates, propagates Error explaining backend is offline.
+ *    - For the Santa Cruz preset, falls back to demo_santa_cruz.json labeled as demo data.
  */
 export async function analyzeRotation(req: AnalyzeRequest): Promise<AnalyzeResult> {
   // Normalize payload ensuring current_rotation is set
@@ -106,6 +139,8 @@ export async function analyzeRotation(req: AnalyzeRequest): Promise<AnalyzeResul
     current_rotation: req.current_rotation ?? req.rotation!,
     include_diversified: Boolean(req.include_diversified),
   };
+
+  const isDemoCoords = isSantaCruzPreset(payload.lat, payload.lon);
 
   try {
     const res = await fetch(`${API_BASE}/analyze`, {
@@ -119,7 +154,7 @@ export async function analyzeRotation(req: AnalyzeRequest): Promise<AnalyzeResul
 
     if (res.ok) {
       const data: AnalyzeResponse = await res.json();
-      return { data, offline: false };
+      return { data, offline: false, isDemo: false };
     }
 
     // Handle 422 Validation Error: MUST THROW, NEVER FALLBACK
@@ -142,32 +177,42 @@ export async function analyzeRotation(req: AnalyzeRequest): Promise<AnalyzeResul
 
     // Handle 503 NASA POWER Unavailable
     if (res.status === 503) {
-      let detailMsg = "El servicio NASA POWER no está disponible temporalmente.";
+      let detailMsg = "El servicio NASA POWER no está disponible temporalmente y no existen datos climáticos en caché para estas coordenadas.";
       try {
         const errorBody = await res.json();
         if (errorBody.detail) detailMsg = errorBody.detail;
       } catch {
         // use default detailMsg
       }
-      console.warn(`[RotaClima API] Backend retornó HTTP 503 (${detailMsg}). Usando demo precacheada.`);
+      if (!isDemoCoords) {
+        throw new ApiError(503, detailMsg);
+      }
+      console.warn(`[RotaClima API] Backend retornó HTTP 503 (${detailMsg}) para Santa Cruz. Usando demo precacheada.`);
       const demoData = await loadDemoSantaCruz();
-      return { data: demoData, offline: true };
+      return { data: demoData, offline: true, isDemo: true };
     }
 
     // Other non-OK HTTP status (e.g. 500)
     const errText = await res.text();
     throw new ApiError(res.status, `Error del servidor (HTTP ${res.status}): ${errText}`);
   } catch (err: unknown) {
-    // If it is already an ApiError (e.g. 422), propagate it immediately!
+    // If it is already an ApiError (e.g. 422 or 503), propagate it immediately!
     if (err instanceof ApiError) {
       throw err;
     }
 
-    // If it is a network error (TypeError: Failed to fetch, connection refused, etc.)
-    console.warn("[RotaClima API] Conexión rechazada o red no disponible. Activando modo demo offline.", err);
+    // Network error (connection refused, failed to fetch, etc.)
+    if (!isDemoCoords) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(
+        `Error de conexión con el backend (${msg}). No se pueden simular coordenadas arbitrarias (${payload.lat}, ${payload.lon}) sin conexión al servidor.`
+      );
+    }
+
+    console.warn("[RotaClima API] Conexión rechazada o red no disponible para Santa Cruz. Activando modo demo offline.", err);
     try {
       const demoData = await loadDemoSantaCruz();
-      return { data: demoData, offline: true };
+      return { data: demoData, offline: true, isDemo: true };
     } catch (fallbackErr) {
       const msg = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
       throw new Error(`Modo offline falló: no se pudo cargar el demo precargado. (${msg})`);

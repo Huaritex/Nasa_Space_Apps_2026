@@ -15,10 +15,10 @@
 **RotaClima** es un motor de simulación biofísica y agroclimática diseñado para productores agrícolas y técnicos de campo. Permite evaluar y comparar la rotación de cultivos actual de un lote contra 2 o 3 alternativas agronómicamente viables (perfiles **Adaptada**, **Regenerativa** y **Diversificada**), simulando su desempeño día a día contra **~34 campañas agrícolas reales** (1991–2024) provenientes del archivo satelital y de reanálisis de **NASA POWER**.
 
 Para cada estrategia evaluada, RotaClima cuantifica:
-- **Productividad relativa esperada** respecto al potencial agroecológico.
-- **Riesgo climático real**: probabilidad de sufrir una campaña mala (rendimiento menor al 60% del potencial) expresada en lenguaje directo (ej. *"Campaña mala en 4 de 20 años"*).
-- **Salud del suelo**: índice integral de 0 a 100 evaluando balance de nitrógeno, diversidad botánica, ciclado de materia orgánica y protección contra erosión hídrica basada en la escorrentía simulada con lluvias reales.
-- **Trazabilidad científica total**: cada afirmación en las fichas de recomendación incluye un **chip de evidencia** que referencia el conjunto de datos de NASA, los parámetros meteorológicos exactos utilizados y la ventana de campañas evaluada.
+- **Productividad relativa esperada**: rendimiento medio respecto al potencial agroecológico sin estrés hídrico ni térmico.
+- **Riesgo climático real**: probabilidad de sufrir una campaña mala (rendimiento menor al 60% del potencial) expresada en lenguaje directo (ej. *"Campaña mala en 1 de 20 años"*), junto con el percentil 10 ($P_{10}$) y la lista de los 3 peores años históricos de la serie.
+- **Salud del suelo**: índice integral de 0 a 100 evaluando balance de nitrógeno, diversidad de familias botánicas, ciclado de materia orgánica y protección contra erosión hídrica basada en la escorrentía simulada con lluvias reales.
+- **Trazabilidad científica total**: cada afirmación en las fichas de recomendación incluye un **chip de evidencia interactivo** que referencia el conjunto de datos de NASA, los parámetros meteorológicos exactos utilizados, sus valores numéricos y la ventana de campañas evaluada.
 
 ### ⚠️ Principio Fundacional: Sin Machine Learning ni Chatbots
 > **RotaClima NO utiliza redes neuronales, modelos de lenguaje opacos ni cajas negras estadísticas.**  
@@ -28,70 +28,105 @@ Para cada estrategia evaluada, RotaClima cuantifica:
 
 ## 2. Arquitectura del Sistema
 
-El proyecto está diseñado bajo una arquitectura desacoplada y orientada a primeros principios:
+El sistema implementa una arquitectura desacoplada y orientada a funciones puras numéricas:
 
 ```
-[ Usuario / Técnico ]
-        │  (Selección geográfica en mapa Leaflet + Textura de suelo + Rotación actual)
-        ▼
+[ Productor / Técnico Agrícola ]
+         │  (Coordenadas en mapa Leaflet + Textura de suelo + Rotación de cultivos)
+         ▼
 ┌────────────────────────────────────────────────────────────────────────┐
 │ FRONTEND (Vite + React 19 + TypeScript Estricto)                       │
-│  - src/views/MapForm.tsx        : Mapa interactivo y editor de rotación│
+│  - src/views/MapForm.tsx        : Mapa interactivo y configuración     │
+│  - src/components/RotationEditor: Editor quincenal de rotaciones       │
 │  - src/views/ClimateShift.tsx   : Diagnóstico de cambio de régimen     │
 │  - src/views/Compare.tsx        : Comparación, tiras y fichas NASA     │
+│  - src/components/CompareTable  : Tabla comparativa de métricas        │
+│  - src/components/RotationCard  : Fichas con chips de evidencia NASA   │
 │  - src/components/CalendarChart : Calendario quincenal agroclimático   │
-│  - src/api.ts                   : Cliente con fallback offline a demo  │
+│  - src/api.ts                   : Cliente HTTP con fallback a demo     │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │ HTTP POST /analyze
-                                    │ (o fallback a demo_santa_cruz.json)
+                                    │ (o fallback etiquetado a demo_santa_cruz.json)
                                     ▼
 ┌────────────────────────────────────────────────────────────────────────┐
 │ BACKEND (FastAPI + NumPy Vectorizado + Pandas + SciPy)                 │
-│  - app/nasa/power.py       : Cliente NASA POWER con caché y reintentos │
-│  - app/engine/calendar.py  : Definición de campañas (S: jul-jun)       │
+│  - app/nasa/power.py       : Cliente NASA POWER, caché y reintentos    │
+│  - app/engine/calendar.py  : Definición de campañas agrícolas (S/N)    │
 │  - app/engine/et0.py       : Penman-Monteith (FAO-56) y Hargreaves     │
-│  - app/engine/crop.py      : Fenología Kc 4 etapas y floración crítica │
-│  - app/engine/slot.py      : Balance hídrico diario + Escorrentía CN   │
+│  - app/engine/crop.py      : Fenología Kc en 4 fases y ventana crítica │
+│  - app/engine/slot.py      : Balance hídrico balde + Escorrentía CN    │
 │                            + EcoCrop térmico + Estrés calor/helada     │
 │  - app/engine/table.py     : SlotTable memoizada y suavizado circular  │
-│  - app/engine/rotation.py  : Evaluación multianual y métricas          │
-│  - app/engine/soil.py      : Ponderación de suelo (N, Div, MO, Erosión)│
+│  - app/engine/rotation.py  : Evaluación multianual y métricas P e I   │
+│  - app/engine/soil.py      : Score de suelo (N, Div, MO, Erosión)      │
 │  - app/engine/climate.py   : Perfil antes/ahora + Mann-Whitney U test  │
-│  - app/engine/alternatives : Optimización lexicográfica de alternativas│
+│  - app/engine/alternatives : Optimización lexicográfica y relajación   │
 │  - app/engine/cards.py     : Generador determinista de fichas          │
-│  - app/pipeline.py         : Pipeline integral y orquestación          │
+│  - app/pipeline.py         : Orquestación integral de simulación       │
 └───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Consulta REST / Caché en disco
+                                    │ Consulta REST / Caché en disco local
                                     ▼
        [ NASA POWER API: MERRA-2 (0.5°×0.625°) / CERES SYN1deg (1°) ]
 ```
 
 ---
 
-## 3. Fuentes de Datos NASA y Fundamentos Agronómicos
+## 3. Fuentes de Datos NASA y Fundamentos Biofísicos
 
-### Datos Satelitales de NASA POWER
-RotaClima consulta la API diaria de **NASA POWER** (comunidad Agroclimatología `AG`) para el periodo continuo `19910101` a `20251231` (12.784 días). Los 10 parámetros canónicos utilizados son:
+### 3.1 Datos Satelitales y de Reanálisis: NASA POWER API
+RotaClima obtiene sus datos climáticos diarios desde la API temporal de puntos de **NASA POWER** (*Prediction Of Worldwide Energy Resources*), desarrollada por el Centro de Investigación Langley de la NASA:
 
-| Parámetro POWER | Variable en Motor | Unidad | Significado Físico / Agronómico |
+- **Endpoint oficial**: `https://power.larc.nasa.gov/api/temporal/daily/point`
+- **Comunidad**: Agroclimatología (`community=AG`).
+- **Rango temporal continuo**: Del `19910101` al `20251231` (12.784 días consecutivos sin vacíos temporales).
+- **Cobertura histórica**: ~34 campañas agrícolas completas por punto geográfico (1991/92 a 2024/25 en el hemisferio sur, 1991 a 2024 en el hemisferio norte).
+- **Caché local en disco**: Almacenado en `backend/cache/power/` bajo el patrón canónico `power_{lat:.2f}_{lon:.2f}_{start}_{end}.json`. Una vez descargado un punto, las consultas posteriores se resuelven en $< 2\text{ ms}$ directamente desde el disco sin llamadas a la red.
+- **Elevación topográfica**: Extraída automáticamente en metros sobre el nivel del mar desde el metadato GeoJSON `geometry.coordinates[2]`.
+- **Tratamiento de valores nulos**: El código de relleno `-999.0` de NASA POWER se convierte de forma estricta e inmediata a `NaN` en `backend/app/nasa/power.py` y en ningún otro lugar, impidiendo que contamine sumas o promedios.
+- **Resiliencia de conexión**: Política de 3 reintentos con retroceso exponencial (`2.0s`, `4.0s`, `8.0s`). Si el servicio externo no está disponible y no existen datos cacheados, el backend responde con una excepción controlada `PowerUnavailable` (HTTP 503).
+
+#### Parámetros Físicos Consultados a NASA POWER
+El motor extrae los 8 parámetros meteorológicos físicos canónicos esenciales para el balance hídrico y térmico (más 2 variables edáficas satelitales complementarias):
+
+| Parámetro POWER | Variable Interna | Unidad | Significado Biofísico / Agronómico |
 |---|---|---|---|
-| `PRECTOTCORR` | `prec` | mm/día | Precipitación diaria corregida en superficie |
-| `T2M` | `t2m` | °C | Temperatura media diaria del aire a 2 metros |
-| `T2M_MAX` | `tmax` | °C | Temperatura máxima diaria a 2 metros |
-| `T2M_MIN` | `tmin` | °C | Temperatura mínima diaria a 2 metros |
-| `RH2M` | `rh` | % | Humedad relativa a 2 metros |
-| `ALLSKY_SFC_SW_DWN` | `rs` | MJ/m²/día | Radiación solar incidente en superficie (onda corta) |
-| `WS2M` | `ws` | m/s | Velocidad del viento a 2 metros de altura |
-| `GWETTOP` | `gwettop` | 0..1 | Humedad superficial del suelo (0–5 cm) |
-| `GWETROOT` | `gwetroot` | 0..1 | Humedad en la zona radicular (0–100 cm) |
+| `PRECTOTCORR` | `prec` | mm/día | Precipitación diaria corregida en superficie (fuente MERRA-2) |
+| `T2M_MAX` | `tmax` | °C | Temperatura máxima diaria del aire a 2 metros de altura |
+| `T2M_MIN` | `tmin` | °C | Temperatura mínima diaria del aire a 2 metros de altura |
+| `T2M` | `t2m` | °C | Temperatura media diaria del aire a 2 metros de altura |
+| `RH2M` | `rh` | % | Humedad relativa del aire a 2 metros de altura |
+| `ALLSKY_SFC_SW_DWN` | `rs` | MJ/m²/día | Radiación solar incidente global en superficie de onda corta (CERES) |
+| `WS2M` | `ws` | m/s | Velocidad media del viento a 2 metros de altura |
 | `PS` | `ps` | kPa | Presión atmosférica en superficie |
+| `GWETTOP` | `gwettop` | 0..1 | Humedad relativa del suelo en estrato superficial (0–5 cm) |
+| `GWETROOT` | `gwetroot` | 0..1 | Humedad relativa del suelo en zona radicular (0–100 cm) |
 
-El parser de NASA POWER (`app/nasa/power.py`):
-1. Reemplaza el valor nulo de relleno `-999.0` estrictamente por `np.nan` antes de cualquier cálculo.
-2. Extrae la elevación topográfica en metros (`elevation_m`) desde `geometry.coordinates[2]`.
-3. Construye un `DatetimeIndex` diario continuo sin vacíos cronológicos.
+---
 
-### Modelado Agronómico Normativo
+### 3.2 MODIS ORNL: Validación Satelital Remota (Trabajo Futuro Planificado — Extra E1 de Fase F7)
+> **⚠️ ACLARACIÓN DE ALCANCE:**  
+> **MODIS ORNL NO está implementado ni forma parte del camino crítico de ejecución del endpoint `/analyze`.**  
+> El motor operativo de RotaClima en producción funciona exclusivamente con datos de NASA POWER. La integración de MODIS ORNL está catalogada estrictamente como **trabajo futuro / validación remota planificada** dentro del Extra E1 de la Fase F7 del plan maestro (`PLAN.md` §3 y §7).
+
+#### Justificación Técnica de Arquitectura
+La API REST de subconjuntos de productos terrestres de MODIS en ORNL DAAC (`https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset`) impone restricciones estrictas:
+- Máximo 10 fechas compuestas por petición HTTP (peticiones mayores devuelven HTTP 400).
+- Latencia observada de ~5 segundos por bloque de fechas.
+- Para una serie de 24 años a 16 días de resolución (~550 fechas compuestas), una consulta completa requeriría más de 50 peticiones HTTP secuenciales y ~275 segundos de espera, lo cual es inaceptable para un flujo interactivo en tiempo real.
+
+#### Metodología Planificada para Extra E1 (Validación Fuera de Línea)
+En la fase F7, el módulo complementario `nasa/modis.py` ejecutará una validación remota cruzada *offline* para el lote demo:
+1. **Producto satelital**: `MOD13Q1` (resolución espacial de 250 m, compuestos de 16 días) extrayendo la banda `250m_16_days_NDVI` con factor de escala $0.0001$.
+2. **Caché en disco**: Descarga por bloques de $\le 10$ fechas almacenada localmente en `backend/cache/modis/`.
+3. **Cotejo con simulación biofísica**:
+   - Se extraerá el NDVI máximo observado en cada campaña agrícola.
+   - Se contrastará contra el índice de productividad simulado ($I$) de la rotación testigo mediante el coeficiente de correlación de rangos de Spearman.
+   - Se verificará empíricamente cuántas de las campañas clasificadas como "malas" por el motor biofísico caen en el tercil inferior de NDVI satelital.
+   - Los resultados se presentarán con transparencia científica tal cual arrojen las observaciones satelitales.
+
+---
+
+### 3.3 Modelado Agronómico Normativo
 - **Evapotranspiración de Referencia ($ET_0$)**: Calculada con la ecuación estándar de **Penman-Monteith (FAO-56 eq. 6)** usando temperatura media calculada como $(T_{max} + T_{min})/2$. Si faltan variables higrométricas o de viento en algún día, se activa de forma transparente el método de **Hargreaves (FAO-56 eq. 52)** multiplicando la radiación extraterrestre ($R_a$, ec. 21–25) con latitud convertida a radianes por el factor canónico $0.408$.
 - **Fenología y Demanda de Agua ($K_c$)**: Curva lineal por tramos en 4 fases de desarrollo (inicial, desarrollo, media y maduración) según FAO-56 Tablas 11 y 12.
 - **Escorrentía Superficial y Lluvia Efectiva**: Implementación vectorizada de **SCS-CN (USDA TR-55)** ajustada según el Número de Curva ($CN$) y Capacidad de Agua Disponible ($AWC$) de la textura del suelo (`arenoso`, `franco`, `arcilloso`).
@@ -108,42 +143,85 @@ El parser de NASA POWER (`app/nasa/power.py`):
 
 ---
 
-## 4. Instalación y Ejecución
+## 4. Instalación y Ejecución Reproducible
 
-### Requisitos Previos
-- **Python**: $\ge 3.11$ (probado en Python 3.12)
-- **Node.js**: $\ge 20.0$ (con `npm` $\ge 10.0$)
+### Requisitos del Sistema
+- **Python**: $\ge 3.11$ (probado en Python 3.11 y 3.12)
+- **Node.js**: $\ge 20.0$ (con gestor `npm` $\ge 10.0$)
 
 ---
 
-### 4.1 Backend (FastAPI + Motor de Simulación)
+### 4.1 Backend (FastAPI + Motor Biofísico)
 
 ```bash
 # 1. Ingresar al directorio del backend
 cd backend
 
-# 2. Crear entorno virtual e instalar dependencias
+# 2. Crear y activar el entorno virtual de Python
 python3 -m venv .venv
 source .venv/bin/activate
+
+# 3. Instalar dependencias en modo editable con herramientas de desarrollo
 pip install -e ".[dev]"
 
-# 3. Ejecutar la suite completa de pruebas unitarias
+# 4. Ejecutar la suite completa de pruebas unitarias (100% offline, 0 llamadas de red)
 pytest -q
-# Salida esperada: 154 passed en ~2 s (0 llamadas a la red)
+# Alternativa directa sin activar entorno:
+# backend/.venv/bin/pytest -q
+# Salida esperada: 154 passed en ~1-2 min
 
-# 4. Iniciar el servidor API
+# 5. Iniciar el servidor API de FastAPI
 uvicorn app.main:app --reload --port 8000
+# Alternativa directa:
+# backend/.venv/bin/uvicorn app.main:app --reload --port 8000
 ```
 
-El backend expondrá:
-- `GET http://localhost:8000/health`: Verificación de servicio (`{"status": "ok"}`).
-- `GET http://localhost:8000/crops`: Catálogo de los 13 cultivos con estado de verificación agronómica.
-- `POST http://localhost:8000/analyze`: Endpoint principal de análisis de rotaciones.
-- Documentación interactiva Swagger: `http://localhost:8000/docs`.
+El backend expondrá inmediatamente:
+- `GET http://localhost:8000/health`: Verificación de salud (`{"status": "ok"}`).
+- `GET http://localhost:8000/crops`: Catálogo agronómico de los 13 cultivos con parámetros FAO-56/EcoCrop y banderas de verificación.
+- `POST http://localhost:8000/analyze`: Endpoint principal de simulación de rotaciones.
+- `GET http://localhost:8000/docs`: Interfaz Swagger UI para exploración interactiva de la API.
 
 ---
 
-### 4.2 Validación Científica en Notebook (Puerta Go/No-Go N1/N2)
+### 4.2 Frontend (Vite + React 19 + TypeScript Estricto)
+
+```bash
+# 1. Ingresar al directorio del frontend
+cd frontend
+
+# 2. Instalar dependencias de Node.js
+npm install
+
+# 3. Iniciar el servidor de desarrollo Vite con Hot Module Replacement (HMR)
+npm run dev
+# Abrir en el navegador: http://localhost:5173
+
+# 4. Verificar compilación estricta de tipos TypeScript y empaquetado de producción
+npm run build
+# Salida esperada: "built in ...ms" sin ningún error de compilación ni de tipado.
+```
+
+---
+
+### 4.3 Scripts de Precaché y Fixtures
+
+Para operar de forma completamente fluida durante ferias, presentaciones o pruebas sin conexión a Internet:
+
+```bash
+cd backend
+
+# Generar el dataset precacheado de demostración (Santa Cruz, Bolivia):
+python scripts/precache_demo.py
+# Genera frontend/public/demo_santa_cruz.json con las 34 campañas satelitales procesadas.
+
+# (Opcional, requiere conexión a Internet) Descargar fixture crudo de NASA POWER para tests:
+python scripts/fetch_fixture.py
+```
+
+---
+
+### 4.4 Validación Científica en Notebook (Puerta Go/No-Go N1/N2)
 
 El notebook `notebooks/01_validacion_motor.ipynb` constituye la puerta de control de calidad agronómica y meteorológica antes de la interfaz gráfica. Se ejecuta de forma 100% offline contra el fixture demo de Santa Cruz:
 
@@ -169,74 +247,83 @@ Las 5 aserciones de validación obligatoria son:
 
 ---
 
-### 4.3 Generación del Precache Demo
+## 5. Tabla de Trazabilidad: Requisito → Pantalla / Vista del Frontend
 
-Para garantizar una experiencia fluida sin latencia de red durante demostraciones o ferias de proyectos:
+La siguiente matriz documenta la correspondencia punto por punto entre cada requisito funcional, biofísico y de visualización del sistema y su implementación concreta en la interfaz de usuario:
 
-```bash
-cd backend
-python scripts/precache_demo.py
-```
-*Genera `frontend/public/demo_santa_cruz.json` (96.1 KB / 98.372 bytes) simulando las 34 campañas de Santa Cruz (-17.30, -62.25) en 20.01 s.*
-
----
-
-### 4.4 Frontend (Vite + React + TypeScript)
-
-```bash
-# 1. Ingresar al directorio del frontend
-cd frontend
-
-# 2. Instalar dependencias de Node
-npm install
-
-# 3. Iniciar el servidor de desarrollo Vite
-npm run dev
-# Abrir en el navegador: http://localhost:5173
-
-# 4. Compilar para producción (validación de tipos estricta)
-npm run build
-```
-
----
-
-## 5. Benchmark de Rendimiento y Decisión T6.2
-
-En cumplimiento de la especificación técnica de `PLAN.md` §3 (tareas T6.1 y T6.2):
-
-| Escenario de Ejecución | Tiempo Medido | Límite Normativo | Resultado / Decisión |
+| Requisito del Sistema / Agronómico | Pantalla / Vista en Frontend | Componentes de Código | Elementos de Interacción y Salida |
 |---|---|---|---|
-| **Primera corrida /analyze** (cómputo biofísico de 34 campañas x todas las combinaciones de siembra sin caché en memoria) | **20.01 s** (script precache)<br>**26.12 s** (HTTP vivo Uvicorn E2E) | $< 30.0\text{ s}$ | **APROBADO**. No se requiere activar el prefiltro térmico T6.2. Se conserva el cálculo biofísico completo. |
-| **Consultas repetidas /analyze** (caché en memoria indexado por hash SHA-256 de parámetros) | **1.95 ms** (HTTP vivo Uvicorn E2E) | $< 1.0\text{ s}$ | **APROBADO**. Respuesta prácticamente instantánea e idéntica byte a byte. |
-| **Modo offline (fallback a demo estático)** | **< 15 ms** | Inmediato | **APROBADO**. Fallback transparente ante pérdida de conexión con el backend. |
+| **Selección de ubicación geográfica**<br>(Coordenadas lat/lon arbitrarias, mapa interactivo, marcadores, validación de rangos $[-60, 60]$ y $[-180, 180]$) | `📍 Parcela y Rotación` | `frontend/src/views/MapForm.tsx`<br>`react-leaflet` (`MapContainer`, `Marker`) | Mapa Leaflet con captura de click, campos numéricos de lat/lon con edición libre, botón "Cargar Demo Santa Cruz". |
+| **Configuración edáfica de parcela**<br>(Selección de textura de suelo: `arenoso`, `franco`, `arcilloso`, mapeo a AWC y Curve Number CN) | `📍 Parcela y Rotación` | `frontend/src/views/MapForm.tsx` | Selector radial/tarjetas de textura con descripción de capacidad de retención de agua y susceptibilidad a escorrentía. |
+| **Constructor interactivo de rotaciones**<br>(Selección de especies del catálogo de 13 cultivos, quincenas de siembra `MM-DD`, validación de tiempos de espera y ciclos) | `📍 Parcela y Rotación` | `frontend/src/components/RotationEditor.tsx` | Selector quincenal (días 01 y 16), catálogo con distintivo de cultivo de cobertura, validación en vivo de solapamiento y tiempo de barbecho ($\ge 15$ días). |
+| **Opción de rotación diversificada**<br>(Inclusión de rotaciones bianuales con multiconjuntos de cultivos distintos) | `📍 Parcela y Rotación` | `frontend/src/views/MapForm.tsx` | Checkbox para habilitar ciclo multianual de 2 años (`include_diversified`). |
+| **Diagnóstico de cambio climático regional**<br>(Comparación de 15 años base `before` 1991–2005 vs 15 años recientes `recent` 2010–2024 sobre 8 métricas) | `🌦️ Tu Clima Cambió` | `frontend/src/views/ClimateShift.tsx`<br>`frontend/src/components/MetricDelta.tsx` | Tarjetas comparativas con valor antes/ahora, variación absoluta/porcentual, histogramas o barras Recharts y estado de tendencia. |
+| **Significancia estadística de tendencias**<br>(Prueba no paramétrica de Mann-Whitney U con umbral de significancia $p < 0.10$) | `🌦️ Tu Clima Cambió` | `frontend/src/components/MetricDelta.tsx` | Distintivos visuales con valor $p$; etiqueta explícita de `"No significativo"` cuando $p \ge 0.10$ para evitar falsas alarmas. |
+| **Calendario agroclimático quincenal**<br>(Distribución estacional de 24 quincenas de lluvia y $ET_0$ para periodos `before` vs `recent`) | `📅 Calendario Agroclimático` | `frontend/src/components/CalendarChart.tsx`<br>`recharts` (`BarChart`, `ComposedChart`) | Gráfica estacional de 24 quincenas comparando precipitación y demanda evapotranspirativa histórica y reciente. |
+| **Alineación fenológica de cultivos**<br>(Superposición de fases de desarrollo y ventana crítica de floración con el calendario climático) | `📅 Calendario Agroclimático` | `frontend/src/components/CalendarChart.tsx` | Barras de ciclo de cultivo divididas en 4 etapas FAO-56 con resaltado de la ventana sensible a sequía y golpe de calor. |
+| **Generación de alternativas agronómicas**<br>(Presentación simultánea de rotación Actual vs Adaptada vs Regenerativa vs Diversificada) | `⚖️ Comparar Rotaciones` | `frontend/src/views/Compare.tsx`<br>`frontend/src/components/CompareTable.tsx` | Pestañas/columnas comparativas con métricas unificadas, productividad esperada y costo de transición. |
+| **Matriz de riesgo y campañas malas**<br>(Frecuencia de cosechas fallidas "$X$ de 20 años", percentil 10 $P_{10}$, los 3 peores años históricos) | `⚖️ Comparar Rotaciones` | `frontend/src/components/CompareTable.tsx`<br>`frontend/src/components/RotationCard.tsx` | Semáforos de riesgo, contador textual directo para agricultores, lista de campañas críticas históricas (ej. 2016/17, 2023/24). |
+| **Tira gráfica de 20 campañas**<br>(Visualización cronológica año por año del desempeño relativo de cada rotación) | `⚖️ Comparar Rotaciones` | `frontend/src/views/Compare.tsx`<br>`frontend/src/components/RotationCard.tsx` | Tira de bloques de colores representando cada una de las últimas 20 campañas (verde: normal; rojo: mala con $I < 0.60$). |
+| **Atribución de factor limitante**<br>(Identificación del estrés dominante por campaña: agua, calor, helada, temperatura, ninguno) | `⚖️ Comparar Rotaciones` | `frontend/src/components/RotationCard.tsx` | Etiquetas de diagnóstico físico indicando si la pérdida de rendimiento se debió a sequía o a estrés térmico en floración. |
+| **Evaluación integral de salud del suelo**<br>(Índice 0–100 ponderando nitrógeno, diversidad botánica, materia orgánica y control de erosión) | `⚖️ Comparar Rotaciones` | `frontend/src/components/CompareTable.tsx`<br>`frontend/src/views/Compare.tsx` | Medidor de salud edáfica, desglose de aportes de rastrojo y porcentaje de reducción de escorrentía superficial. |
+| **Fichas de decisión agronómica estructurada**<br>(Justificación causal del por qué se recomienda cada opción, beneficios claros y riesgos asumidos) | `⚖️ Comparar Rotaciones` | `frontend/src/components/RotationCard.tsx` | Bloques estructurados de `Por qué cambiar`, `Beneficios proyectados` y `Riesgos a monitorear` generados deterministamente. |
+| **Acción concreta inmediata de siembra**<br>(Indicación de qué sembrar primero, fecha recomendada y estado previo del lote) | `⚖️ Comparar Rotaciones` | `frontend/src/components/RotationCard.tsx` | Banner de `Próximo Paso`: cultivo específico, quincena calendario sugerida (ej. *16 de Noviembre*) y manejo antecedente. |
+| **Trazabilidad científica a datos NASA**<br>(Respaldo de cada afirmación con parámetros satelitales exactos, valores y periodos) | `⚖️ Comparar Rotaciones` | `frontend/src/components/RotationCard.tsx` (Evidence Chips / Modal) | Chips interactivos desplegables con valores de `PRECTOTCORR`, `T2M_MAX`, `RH2M`, etc., dataset satelital y campañas fuente. |
+| **Transparencia en supuestos metodológicos**<br>(Acceso permanente a los supuestos S1 a S12 y limitaciones del modelo biofísico) | Pie de página global | `frontend/src/App.tsx` (`footer`) | Botón interactivo `"Ver supuestos metodológicos (S1–S12)"` que despliega el panel completo de límites de PLAN §4.10. |
+| **Resiliencia de red y modo demo offline**<br>(Alerta visual de modo offline, fallback etiquetado a datos precacheados sin enmascarar errores) | Barra superior global | `frontend/src/App.tsx`<br>`frontend/src/api.ts` | Banner superior informativo que advierte cuando se opera en modo demo offline y gestión limpia de errores HTTP 503. |
 
 ---
 
-## 6. Supuestos y Limitaciones del Sistema (S1 a S12)
+## 6. Supuestos y Limitaciones del Modelo Biofísico e Hidrológico (PLAN §4.10)
 
-En estricta concordancia con la sección §4.10 de `PLAN.md` y expuestos de forma transparente al usuario en el pie de página de la aplicación:
+En estricta concordancia con la sección §4.10 de `PLAN.md`, RotaClima documenta y expone de forma transparente tanto en la interfaz como en este documento los supuestos simplificadores y límites del modelado biofísico:
 
-1. **S1 (Escala y Resolución Espacial)**: Los datos de NASA POWER provienen de reanálisis global MERRA-2 a $\approx 0.5^\circ \times 0.625^\circ$ ($\approx 50\text{ km}$) y radiación solar CERES SYN1deg a $1^\circ$. Describen el clima macro-regional, no el microclima específico de una parcela particular. Las temperaturas máximas modeladas tienden a ser más suaves que las mediciones de estaciones en superficie; en consecuencia, los conteos de días con calor extremo ($> 35$ °C) deben interpretarse como conservadores.
-2. **S2 (Condición Hídrica Inicial)**: El contenido de agua en el perfil de suelo al momento de la siembra se estima mediante un periodo de acondicionamiento (*spin-up*) estricto de 180 días previos, utilizando un $K_c$ fijo de barbecho ($0.20$) o de cultivo previo ($0.90$). No se simula la historia completa de cultivos de años anteriores.
-3. **S3 (Fenología por Calendario)**: La duración de las fases de crecimiento se modela en días calendario fijos según FAO-56 (Tabla 11), sin ajustes dinámicos por grados-día acumulados (GDD), humedad relativa de viento ni fotoperiodo.
-4. **S4 (Desacoplamiento Suelo-Rendimiento)**: El puntaje de salud del suelo refleja la calidad del manejo agronómico, pero **no** retroalimenta el rendimiento relativo de los cultivos simulados en la misma campaña.
-5. **S5 (Práctica Agronómica Base)**: Se asume manejo bajo **siembra directa** (cero labranza), donde los rastrojos de la cosecha previa permanecen en superficie protegiendo el suelo de la escorrentía y la erosión hídrica.
-6. **S6 (Impacto de Heladas)**: El daño por temperaturas bajo cero se modela como una penalización escalón: $f_{helada} = 0.3$ durante la ventana crítica de floración y $f_{helada} = 0.7$ durante la fase vegetativa.
-7. **S7 (Umbrales de Estrés Térmico)**: Para aquellos cultivos cuyos umbrales de temperatura crítica no están documentados en Teixeira et al. (2013), los límites se derivan mecánicamente de los rangos térmicos óptimos y máximos de la base FAO EcoCrop.
-8. **S8 (Aportes Nutricionales y Rastrojo)**: Las clasificaciones de fijación de nitrógeno y volumen de rastrojo provienen de convenciones agronómicas cualitativas estandarizadas, no de balances estequiométricos de laboratorio.
-9. **S9 (Cultivos de Cobertura)**: Especies de cobertura como avena negra y crotalaria se modelan con un ciclo truncado a 90 días y terminación en verde ($K_{c,end} = K_{c,mid}$), evaluando su aporte a la cobertura y suelo sin computar rendimiento de grano cosechable.
-10. **S10 (Rendimiento Relativo Sin Precios)**: El indicador de rendimiento se expresa de forma relativa ($Y_{rel} \in [0, 1]$) respecto al potencial agroecológico sin estrés. No se efectúan proyecciones económicas ni se asumen precios de mercado futuros.
-11. **S11 (Modelo de Balde Único)**: El suelo se conceptualiza como un reservorio homogéneo de un solo estrato. No se modelan freáticas fluctuantes, anegamiento prolongado, competencia por malezas, plagas entomológicas ni fallas mecánicas de emergencia.
-12. **S12 (Rigor en Detección de Tendencias)**: Debido a que las series históricas de reanálisis atmosférico pueden contener artefactos instrumentales o satelitales a lo largo de 34 años, toda comparación entre periodos (`before` vs `recent`) reporta el valor $p$ de Mann-Whitney y advierte explícitamente cuando una variación no es estadísticamente significativa.
+### S1. Escala Macro-Regional y Resolución Espacial
+Los datos meteorológicos de NASA POWER provienen de reanálisis atmosférico global **MERRA-2** con resolución de $\approx 0.5^\circ \times 0.625^\circ$ ($\approx 50\text{ km}$) y radiación solar **CERES SYN1deg** a $1^\circ$. Describen el clima macro-regional promedio de la celda, no el microclima específico de una parcela individual ni las variaciones por pendientes orográficas locales. Las temperaturas máximas modeladas tienden a atenuar los picos extremos registrados en termómetros de abrigo meteorológico en superficie; en consecuencia, los conteos de días con calor extremo ($> 35^\circ\text{C}$) deben interpretarse como conservadores.
 
-### Transparencia en Parámetros Agronómicos (`verificar: true`)
-Todo valor agronómico en `backend/app/data/crops.json` lleva explícitamente su fuente bibliográfica y el indicador `"verificar": true`. La interfaz de usuario muestra permanentemente un distintivo con la cantidad de parámetros sujetos a revisión técnica local, evitando generar una falsa sensación de certeza absoluta.
+### S2. Condición Hídrica Inicial y Periodo de Spin-Up
+El contenido de humedad en el perfil de suelo al momento de la siembra se estima mediante un periodo de acondicionamiento (*spin-up*) estricto de **180 días continuos previos**, utilizando un coeficiente $K_c$ fijo de barbecho ($0.20$) o de cultivo antecesor ($0.90$). No se modela la historia agronómica previa ni la gestión de malezas en los años anteriores a la ventana de simulación.
+
+### S3. Fenología Rígida por Días Calendario
+La duración de cada una de las 4 fases de crecimiento (inicial, desarrollo, media y maduración) se modela en días calendario fijos según FAO-56 (Tablas 11 y 12). No se implementa ajuste dinámico de la fenología en función de grados-día de desarrollo acumulados (GDD), humedad relativa del aire, velocidad del viento ni fotoperiodo.
+
+### S4. Desacoplamiento Suelo-Rendimiento
+El puntaje de salud del suelo (0–100) cuantifica la calidad de las prácticas de manejo agronómico (balance de nitrógeno, rotación botánica, materia orgánica y reducción de escorrentía), pero **no retroalimenta el rendimiento relativo simulado** de los cultivos en la misma campaña.
+
+### S5. Práctica Agronómica Base: Siembra Directa
+Se asume un esquema de manejo bajo **siembra directa permanente** (cero labranza), donde los rastrojos de la cosecha previa permanecen en superficie protegiendo el suelo del impacto de las gotas de lluvia, reduciendo la evaporación directa y mitigando la escorrentía superficial.
+
+### S6. Penalización Escalonada por Heladas
+El daño por temperaturas bajo cero ($T_{min} \le 0^\circ\text{C}$) se modela mediante una función escalón determinista: factor $f_{helada} = 0.3$ si la helada ocurre durante la ventana crítica de floración (pérdida del 70% del rendimiento potencial) y $f_{helada} = 0.7$ si acontece durante la fase vegetativa previa.
+
+### S7. Umbrales de Estrés Térmico en Floración
+Para los cultivos cuyos umbrales críticos de aborto floral o daño reproductivo no están documentados explícitamente en Teixeira et al. (2013), los límites de temperatura crítica se derivan mecánicamente a partir de los rangos óptimos y máximos de la base agroecológica FAO EcoCrop.
+
+### S8. Clasificación Cualitativa de Nitrógeno y Rastrojo
+Los aportes de fijación biológica de nitrógeno (categorías fija, neutro, agota) y la producción de biomasa de rastrojo provienen de convenciones agronómicas y literatura técnica generalizada, no de balances estequiométricos de nutrientes ni análisis de laboratorio de suelo.
+
+### S9. Modelado de Cultivos de Cobertura por Analogía
+Especies de cobertura y abonos verdes como avena negra y crotalaria se modelan con un ciclo fenológico truncado a 90 días y terminación en verde ($K_{c,end} = K_{c,mid}$), evaluando exclusivamente su beneficio en cobertura protectora del suelo y aporte radicular sin computar rendimiento de grano cosechable.
+
+### S10. Rendimiento Relativo Sin Variables Económicas
+El indicador de rendimiento se expresa estrictamente de forma relativa ($Y_{rel} \in [0, 1]$) respecto al potencial agroecológico sin estrés hídrico ni térmico. No se realizan proyecciones económicas monetarias, márgenes brutos ni se asumen precios de mercado futuros (`value_weight = 1.0` por defecto).
+
+### S11. Modelo Hidrológico de Balde Único (1D Bucket Model) y Procesos Omitidos
+El balance hídrico del suelo se fundamenta en un modelo hidrológico unidimensional de un solo estrato homogéneo (*1D single-layer bucket model*). Esto implica las siguientes limitaciones explícitas:
+- **Sin estratificación vertical**: No se modela la diferenciación en horizontes edáficos (A, B, C) ni el avance dinámico del frente de humectación en profundidad.
+- **Sin nivel freático ni ascenso capilar (No water table)**: No se modela la fluctuación de capas freáticas someras ni la recarga de agua hacia la zona radicular por ascenso capilar desde la freática.
+- **Sin dinámica biogeoquímica de nutrientes (No nitrogen/nutrient dynamics)**: No se simula la mineralización de materia orgánica, lixiviación de nitratos en profundidad, desnitrificación anaeróbica ni la cinética de adsorción de fósforo o potasio en la solución del suelo.
+- **Parámetros edáficos constantes (Constant soil parameters)**: El Número de Curva ($CN$) y la Capacidad de Agua Disponible ($AWC$) se mantienen constantes en el tiempo para cada clase textural (`arenoso`, `franco`, `arcilloso`). No se simula la compactación por paso de maquinaria agrícola, el encostramiento superficial ni la pérdida progresiva de estructura edáfica.
+- **Sin factores bióticos ni mecánicos**: No se modela la competencia por malezas, incidencia de plagas de insectos, enfermedades fúngicas, anegamiento prolongado (anoxia radicular) ni fallas mecánicas de germinación y emergencia.
+
+### S12. Detección Rigurosa de Tendencias y Artefactos de Reanálisis
+Debido a que las series históricas de reanálisis atmosférico global a lo largo de 34 años pueden incorporar discontinuidades instrumentales o cambios en la constelación de satélites asimilados, toda comparación entre periodos climáticos (`before` vs `recent`) reporta el valor $p$ de la prueba no paramétrica de Mann-Whitney U y etiqueta explícitamente como *"no significativo"* cualquier variación con $p \ge 0.10$.
 
 ---
 
 ## 7. Mapeo del Desafío "Field Shift" a la Solución RotaClima
 
-La siguiente matriz documenta la correspondencia punto por punto entre las exigencias del reto de NASA Space Apps y los módulos de RotaClima:
+La siguiente matriz documenta la correspondencia entre las exigencias del reto de NASA Space Apps y los módulos de RotaClima:
 
 | Requisito del Desafío ("Field Shift") | Dónde y Cómo se Resuelve en RotaClima |
 |---|---|
@@ -248,14 +335,14 @@ La siguiente matriz documenta la correspondencia punto por punto entre las exige
 | **Integración de datos satelitales con la realidad local del productor** | **Vista (a) Parcela + Vista (b) Tu clima cambió**: El productor selecciona su coordenada geográfica exacta en el mapa Leaflet, define la textura de su lote (`arenoso`, `franco`, `arcilloso`) y su esquema de siembra actual. La Vista (b) ilustra cómo cambió el régimen pluviométrico, térmico y de evapotranspiración en su zona entre 1991 y 2024. |
 | **Indicación concreta de qué sembrar a continuación** | **Encabezado de Comparación y Calendario**: Indica exactamente el primer cultivo de la rotación con su fecha quincenal recomendada (ej. *"Sembrar Maíz el 16 de Noviembre"*), su duración de ciclo y el manejo del suelo precedente (`fallow` o `crop`). |
 
-### Guion de Demo de 3 Minutos (`PLAN.md` §7)
+### Guion de Demostración Técnica de 3 Minutos (`PLAN.md` §7)
 
-1. **`0:00–0:25` — Portada:** Plantear el problema (*"Field Shift"*): una rotación pensada para el clima de hace 20 años quedó descalzada; RotaClima usa 35 años de datos diarios NASA POWER de forma 100% determinista (sin ML).
-2. **`0:25–0:50` — Vista (a) Mapa y formulario:** Marcar el lote en Santa Cruz (`-17.30, -62.25`) o cargar el demo en un clic, elegir suelo `franco` y rotación actual `soya@11-16 + soya@05-01` sin sensores ni registro.
-3. **`0:50–1:25` — Vista (b) Tu clima cambió:** Mostrar `before` (`1991–2005`) vs `recent` (`2010–2024`): estación lluviosa `-64.1 días` ($p = 0.0055$), lluvia Q2 `-178.3 mm` ($p = 0.0006$), días $> 35\,^\circ\text{C}$ `+27.7 días` ($p = 0.0084$), junto con métricas marcadas `"No significativo"` (ej. `et0_total` $p = 0.1057$).
-4. **`1:25–2:20` — Vista (c) Comparación, tira de 20 campañas y ficha:** Comparar `Actual` (`1/20` mala en `2016/17`, suelo `47.9/100`) vs `Adaptada` (`0/20`, `112.4%` productividad, suelo `63.8/100`) y `Regenerativa` (`0/20`, `86.3%` productividad, suelo `79.0/100`), abriendo los chips de evidencia NASA.
-5. **`2:20–2:40` — Calendario agroclimático:** Mostrar las 24 quincenas de lluvia y $ET_0$ (`before` vs `recent`) alineadas con la ventana crítica de floración.
-6. **`2:40–3:00` — Cierre:** Cero cajas negras, límites declarados (`50 km` regional, rendimiento relativo, supuestos `S1`–`S12`, cotejo `T0.5`) y siguiente paso con NDVI MODIS (`MOD13Q1`).
+1. **`0:00–0:25` — Portada y Problema:** Plantear el desafío *"Field Shift"*: una rotación planificada para el clima de hace dos décadas ha quedado desfasada. RotaClima analiza 34 años de clima diario de NASA POWER de forma 100% determinista y sin cajas negras de ML.
+2. **`0:25–0:50` — Vista (a) Parcela y rotación:** Seleccionar el lote en Santa Cruz (`-17.30, -62.25`) en el mapa o cargar el demo en un clic, seleccionar textura `franco` y rotación actual `soya@11-16 + soya@05-01` sin requerir sensores costosos ni registros previos.
+3. **`0:50–1:25` — Vista (b) Tu clima cambió:** Analizar la comparación `before` (`1991–2005`) vs `recent` (`2010–2024`): reducción de la estación de lluvias en `-64.1 días` ($p = 0.0055$), caída de lluvia estival en `-178.3 mm` ($p = 0.0006$) y aumento de días con calor extremo $> 35^\circ\text{C}$ en `+27.7 días` ($p = 0.0084$), identificando con rigor las variables sin significancia estadística ($p \ge 0.10$).
+4. **`1:25–2:20` — Vista (c) Comparación de rotaciones y fichas:** Contrastar la rotación `Actual` (`1/20` mala en `2016/17`, suelo `47.9/100`) frente a `Adaptada` (`0/20` malas, `112.4%` productividad, suelo `63.8/100`) y `Regenerativa` (`0/20` malas, `86.3%` productividad, suelo `79.0/100`), explorando los chips de evidencia satelital de NASA POWER.
+5. **`2:20–2:40` — Calendario agroclimático:** Examinar las 24 quincenas anuales de lluvia y $ET_0$ vinculadas con la ventana crítica de floración de los cultivos para verificar cómo la rotación adaptada esquiva las sequías intraestacionales.
+6. **`2:40–3:00` — Cierre y límites:** Recorrer las limitaciones metodológicas declaradas (resolución regional de 50 km, modelo de balde 1D, supuestos S1–S12) y presentar el siguiente paso de validación remota fuera de línea con NDVI de MODIS (`MOD13Q1`, Extra E1).
 
 ---
 
@@ -263,7 +350,7 @@ La siguiente matriz documenta la correspondencia punto por punto entre las exige
 
 ```
 Nasa_Space_Apps_2026/
-├── AGENTS.md                 # Reglas normativas, estándares de codificación e invariantes
+├── AGENTS.md                 # Reglas normativas de ingeniería, estándares e invariantes
 ├── PLAN.md                   # Plan maestro normativo (contratos §2, fórmulas §4, tests §6)
 ├── QUESTIONS.md              # Bitácora de dudas y aclaraciones técnicas
 ├── README.md                 # Documentación técnica integral del proyecto (este archivo)
@@ -272,25 +359,24 @@ Nasa_Space_Apps_2026/
 │   ├── pyproject.toml        # Dependencias: FastAPI, Uvicorn, NumPy, Pandas, SciPy, Pytest
 │   ├── app/
 │   │   ├── main.py           # Endpoints FastAPI (/health, /crops, /analyze) y CORS
-│   │   ├── config.py         # TODAS las constantes numéricas del motor (fuente única)
-│   │   ├── schemas.py        # Modelos de datos Pydantic v2 (contratos §2.1 y §2.2)
-│   │   ├── pipeline.py       # Pipeline de simulación, validación y orquestación
+│   │   ├── config.py         # Constantes numéricas normativas del motor (fuente única)
+│   │   ├── schemas.py        # Modelos de datos Pydantic v2 (contratos de API)
+│   │   ├── pipeline.py       # Pipeline de simulación biofísica y orquestación
 │   │   ├── data/
 │   │   │   ├── crops.json    # Catálogo agronómico de 13 cultivos con fuentes y verificación
-│   │   │   └── crops.py      # Loader y validaciones del catálogo
+│   │   │   └── crops.py      # Cargador y validaciones del catálogo
 │   │   ├── nasa/
-│   │   │   ├── power.py      # Cliente de NASA POWER, caché en disco y conversiones
-│   │   │   └── modis.py      # Módulo satelital complementario (NDVI)
+│   │   │   └── power.py      # Cliente de NASA POWER, caché en disco y conversiones
 │   │   └── engine/           # Funciones biofísicas puras (sin red ni I/O)
-│   │       ├── calendar.py   # Calendario agrícola quincenal y campañas
+│   │       ├── calendar.py   # Calendario agrícola quincenal y particiones temporales
 │   │       ├── et0.py        # Penman-Monteith, radiación Ra y Hargreaves fallback
 │   │       ├── crop.py       # Coeficientes Kc y ventana sensible de floración
-│   │       ├── slot.py       # Balance hídrico, escorrentía SCS-CN y factores térmicos
+│   │       ├── slot.py       # Balance hídrico balde, escorrentía SCS-CN y factores térmicos
 │   │       ├── table.py      # SlotTable memoizada y suavizado circular
 │   │       ├── rotation.py   # Evaluación multianual, métricas P/I y campañas malas
 │   │       ├── soil.py       # Algoritmos de salud de suelo (N, Diversidad, MO, Erosión)
 │   │       ├── climate.py    # Perfil climático antes/ahora y test de Mann-Whitney U
-│   │       ├── alternatives.py # Enumeración de planes y selección con relajación
+│   │       ├── alternatives.py # Enumeración de planes y selección lexicográfica
 │   │       └── cards.py      # Generador determinista de fichas de recomendación
 │   ├── cache/power/          # Caché local de respuestas JSON de NASA POWER
 │   ├── scripts/
@@ -330,8 +416,11 @@ Nasa_Space_Apps_2026/
 
 ---
 
-## 9. Licencia y Créditos
+## 9. Licencia, Atribución y Créditos Científicos
 
 - **NASA Space Apps Challenge 2026** — Desafío *"Field Shift"*.
-- **Datos Satelitales**: Proporcionados por cortesía del proyecto **NASA POWER** (*Prediction Of Worldwide Energy Resources*), financiado por el programa de Ciencias Aplicadas de la NASA.
-- **Metodologías Agronómicas**: Basadas en las directrices de la **Organización de las Naciones Unidas para la Alimentación y la Agricultura (FAO)** y el **Servicio de Conservación de Recursos Naturales del USDA**.
+- **Datos Satelitales y de Reanálisis**: Proporcionados por cortesía del proyecto **NASA POWER** (*Prediction Of Worldwide Energy Resources*), financiado por el Programa de Ciencias Aplicadas de la NASA (Directorio de Misiones Científicas).
+- **Modelos Agronómicos e Hidrológicos**:
+  - Evapotranspiración y fenología de cultivos: **FAO Irrigation and Drainage Paper 56** (Allen, Pereira, Raes, & Smith, 1998).
+  - Escorrentía y balance hídrico: **USDA Soil Conservation Service Curve Number** (SCS-CN, National Engineering Handbook, Section 4).
+  - Umbrales térmicos de estrés crítico: **Teixeira et al. (2013)** (*Global and Planetary Change*) y base ecoclimática **FAO EcoCrop**.

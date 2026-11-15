@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import type { CropSummary, Rotation, SoilTexture } from "../types";
 import { RotationEditor } from "../components/RotationEditor";
@@ -63,6 +63,85 @@ export const MapForm: React.FC<MapFormProps> = ({
 }) => {
   const markerRef = useRef<any>(null);
 
+  const [latStr, setLatStr] = useState<string>(String(lat));
+  const [lonStr, setLonStr] = useState<string>(String(lon));
+
+  // Synchronize string state when lat or lon prop changes externally (e.g. map click, drag, demo load)
+  useEffect(() => {
+    const parsed = parseFloat(latStr);
+    if (isNaN(parsed) || parsed !== lat) {
+      setLatStr(String(lat));
+    }
+  }, [lat]);
+
+  useEffect(() => {
+    const parsed = parseFloat(lonStr);
+    if (isNaN(parsed) || parsed !== lon) {
+      setLonStr(String(lon));
+    }
+  }, [lon]);
+
+  const handleLatChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Allow empty string, "-", or valid floating point numbers
+    if (val === "" || val === "-" || /^-?\d*\.?\d*$/.test(val)) {
+      setLatStr(val);
+      const parsed = parseFloat(val);
+      if (!isNaN(parsed)) {
+        onLatChange(parsed);
+      }
+    }
+  };
+
+  const handleLatBlur = () => {
+    const parsed = parseFloat(latStr);
+    if (isNaN(parsed)) {
+      setLatStr(String(lat));
+    } else {
+      setLatStr(String(parsed));
+    }
+  };
+
+  const handleLonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Allow empty string, "-", or valid floating point numbers
+    if (val === "" || val === "-" || /^-?\d*\.?\d*$/.test(val)) {
+      setLonStr(val);
+      const parsed = parseFloat(val);
+      if (!isNaN(parsed)) {
+        onLonChange(parsed);
+      }
+    }
+  };
+
+  const handleLonBlur = () => {
+    const parsed = parseFloat(lonStr);
+    if (isNaN(parsed)) {
+      setLonStr(String(lon));
+    } else {
+      setLonStr(String(parsed));
+    }
+  };
+
+  const handleDemoClick = () => {
+    setLatStr("-17.3");
+    setLonStr("-62.25");
+    onLoadDemo();
+  };
+
+  const handleSubmit = () => {
+    const pLat = parseFloat(latStr);
+    const pLon = parseFloat(lonStr);
+    if (isNaN(pLat) || isNaN(pLon)) {
+      setLatStr(String(lat));
+      setLonStr(String(lon));
+    } else {
+      if (pLat !== lat) onLatChange(pLat);
+      if (pLon !== lon) onLonChange(pLon);
+    }
+    onSubmit();
+  };
+
   const markerPosition = useMemo<[number, number]>(() => [lat, lon], [lat, lon]);
 
   const eventHandlers = useMemo(
@@ -71,8 +150,12 @@ export const MapForm: React.FC<MapFormProps> = ({
         const marker = markerRef.current;
         if (marker != null) {
           const pos = marker.getLatLng();
-          onLatChange(parseFloat(pos.lat.toFixed(4)));
-          onLonChange(parseFloat(pos.lng.toFixed(4)));
+          const newLat = parseFloat(pos.lat.toFixed(4));
+          const newLon = parseFloat(pos.lng.toFixed(4));
+          setLatStr(String(newLat));
+          setLonStr(String(newLon));
+          onLatChange(newLat);
+          onLonChange(newLon);
         }
       },
     }),
@@ -107,7 +190,7 @@ export const MapForm: React.FC<MapFormProps> = ({
             <button
               type="button"
               className="btn btn-outline btn-sm btn-demo"
-              onClick={onLoadDemo}
+              onClick={handleDemoClick}
               title="Cargar coordenadas y rotación de Santa Cruz, Bolivia (-17.30, -62.25)"
             >
               ⭐ Cargar demo Santa Cruz
@@ -128,6 +211,8 @@ export const MapForm: React.FC<MapFormProps> = ({
               <MapController center={markerPosition} />
               <MapClickHandler
                 onLocationSelect={(newLat, newLon) => {
+                  setLatStr(String(newLat));
+                  setLonStr(String(newLon));
                   onLatChange(newLat);
                   onLonChange(newLon);
                 }}
@@ -148,13 +233,13 @@ export const MapForm: React.FC<MapFormProps> = ({
               </label>
               <input
                 id="lat-input"
-                type="number"
-                step="0.0001"
-                min="-60"
-                max="60"
+                type="text"
+                inputMode="decimal"
                 className="form-input"
-                value={lat}
-                onChange={(e) => onLatChange(parseFloat(e.target.value) || 0)}
+                value={latStr}
+                onChange={handleLatChange}
+                onBlur={handleLatBlur}
+                placeholder="-60.0 a 60.0"
               />
               <span className="form-help">Entre -60.0° y 60.0°</span>
             </div>
@@ -165,13 +250,13 @@ export const MapForm: React.FC<MapFormProps> = ({
               </label>
               <input
                 id="lon-input"
-                type="number"
-                step="0.0001"
-                min="-180"
-                max="180"
+                type="text"
+                inputMode="decimal"
                 className="form-input"
-                value={lon}
-                onChange={(e) => onLonChange(parseFloat(e.target.value) || 0)}
+                value={lonStr}
+                onChange={handleLonChange}
+                onBlur={handleLonBlur}
+                placeholder="-180.0 a 180.0"
               />
               <span className="form-help">Entre -180.0° y 180.0°</span>
             </div>
@@ -240,7 +325,7 @@ export const MapForm: React.FC<MapFormProps> = ({
               <button
                 type="button"
                 className="btn btn-primary btn-lg"
-                onClick={onSubmit}
+                onClick={handleSubmit}
                 disabled={loading}
               >
                 {loading ? (
