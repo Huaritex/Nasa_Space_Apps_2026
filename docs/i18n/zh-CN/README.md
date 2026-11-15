@@ -470,7 +470,7 @@ total = 0.25 · (nitrogen + diversity + erosion + organic_matter)
 
 ## 13. 已知问题
 
-- **脚本重复。** 仓库根目录的 `scripts/` 与 `backend/scripts/` 同时存在，且内容不同。本文档中的命令使用 `backend/scripts/`，视为规范版本。根目录的副本在核对之前已过时。
+- **根目录 `scripts/` 的包装脚本。** 仓库根目录的 `scripts/` 包含两个包装脚本（`fetch_fixture.py`、`precache_demo.py`），它们委托给 `backend/scripts/` 中同名的文件。本文档中的命令在 `backend/` 下运行；根目录的包装脚本是另一种入口。`fetch_modis_fixture.py` 在根目录没有包装脚本。
 - **缺失文件。** [AGENTS.md](../../../AGENTS.md) 和 [PLAN.md](../../../PLAN.md) 将 `QUESTIONS.md` 作为未决问题的记录位置。该文件不在仓库中。
 - **没有许可证文件。** 仓库未声明许可证，因此未定义复用条款。
 - **多样化方案的默认值因客户端而异。** API 默认 `include_diversified: false`；网页界面发送 `true`。

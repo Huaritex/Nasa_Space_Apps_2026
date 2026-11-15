@@ -470,7 +470,7 @@ Generado e ignorado por git: `backend/cache/`, `backend/.venv/`, `frontend/node_
 
 ## 13. Problemas conocidos
 
-- **Scripts duplicados.** Existen `scripts/` en la raíz del repositorio y `backend/scripts/`, y su contenido difiere. Los comandos de este documento usan `backend/scripts/`, que se toma como canónico. Las copias de la raíz están desactualizadas hasta que se reconcilien.
+- **Wrappers en `scripts/` de la raíz.** `scripts/` en la raíz contiene dos wrappers (`fetch_fixture.py`, `precache_demo.py`) que delegan en los archivos homónimos de `backend/scripts/`. Los comandos de este documento se ejecutan desde `backend/`; los wrappers son un punto de entrada alternativo. `fetch_modis_fixture.py` no tiene wrapper en la raíz.
 - **Archivo faltante.** [AGENTS.md](../../../AGENTS.md) y [PLAN.md](../../../PLAN.md) mencionan `QUESTIONS.md` como lugar para las dudas abiertas. No está en el repositorio.
 - **Sin archivo de licencia.** El repositorio no declara una licencia; por tanto, no hay términos de reutilización definidos.
 - **El valor por defecto de diversificada difiere según el cliente.** El valor por defecto de la API es `include_diversified: false`; la interfaz web envía `true`.

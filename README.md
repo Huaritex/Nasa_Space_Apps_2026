@@ -470,7 +470,7 @@ Generated and ignored by git: `backend/cache/`, `backend/.venv/`, `frontend/node
 
 ## 13. Known issues
 
-- **Duplicate scripts.** `scripts/` at the repository root and `backend/scripts/` both exist, and their contents differ. The commands in this document use `backend/scripts/`, which is treated as canonical. The root copies are stale until reconciled.
+- **Root `scripts/` wrappers.** `scripts/` at the repository root holds two wrappers (`fetch_fixture.py`, `precache_demo.py`) that delegate to the same-named files in `backend/scripts/`. The commands in this document run from `backend/`; the root wrappers are an alternative entry point. `fetch_modis_fixture.py` has no root wrapper.
 - **Missing file.** [AGENTS.md](AGENTS.md) and [PLAN.md](PLAN.md) refer to `QUESTIONS.md` as the place for open questions. It is not in the repository.
 - **No license file.** The repository does not declare a license. Reuse terms are therefore not defined.
 - **Diversified default differs by client.** The API default is `include_diversified: false`; the web UI sends `true`.

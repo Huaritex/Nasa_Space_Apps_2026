@@ -10,8 +10,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
@@ -25,8 +23,28 @@ MANIFEST
 # Virtual environments
 .venv/
 venv/
-ENV/
-env/
+/ENV/
+/env/
+
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local logs and databases
+*.log
+*.sqlite
+*.db
+
+# Notebooks, coverage, TypeScript build info
+.ipynb_checkpoints/
+coverage/
+*.tsbuildinfo
+
+# Local Claude Code config
+.claude/settings.local.json
 
 # Testing & Linting
 .pytest_cache/
