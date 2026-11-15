@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RotaClima — Field Shift · NASA Space Apps 2026 (7 slides)</title>
+<meta name="description" content="RotaClima: soporte de decisión determinista para rotaciones agrícolas con 35 años de NASA POWER.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#071018; --bg2:#0b1824;
+  --pbg:linear-gradient(160deg,rgba(16,34,50,.82),rgba(8,18,28,.88));
+  --line:rgba(56,189,248,.18);
+  --em:#10B981; --em2:#34D399; --amb:#F59E0B; --amb2:#FBBF24; --sky:#38BDF8; --sky2:#7DD3FC; --red:#EF4444; --gray:#94A3B8; --vio:#A78BFA;
+  --tx:#F8FAFC; --tx2:#BCC9D6; --tx3:#7C8B9B;
+  --disp:"Space Grotesk","Inter","Segoe UI",system-ui,sans-serif;
+  --sans:"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+  --mono:"JetBrains Mono","Cascadia Code","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--tx);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased}
+#bg{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
+body.no-webgl #bg{display:none}
+body.no-webgl{background:
+  radial-gradient(1200px 700px at 75% 45%,rgba(56,189,248,.16),transparent 60%),
+  radial-gradient(600px 400px at 72% 52%,rgba(16,185,129,.14),transparent 60%),
+  linear-gradient(180deg,#071018,#050b11)}
+body.no-webgl::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(56,189,248,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.05) 1px,transparent 1px);background-size:64px 64px;pointer-events:none}
+
+/* Capas atmosféricas */
+#aurora{position:fixed;inset:-20%;z-index:1;pointer-events:none;mix-blend-mode:screen;opacity:.55;
+  background:
+   radial-gradient(40% 35% at 20% 15%,rgba(16,185,129,.22),transparent 70%),
+   radial-gradient(35% 30% at 85% 10%,rgba(56,189,248,.20),transparent 70%),
+   radial-gradient(45% 40% at 70% 95%,rgba(167,139,250,.12),transparent 70%);
+  filter:blur(30px);animation:aur 28s ease-in-out infinite alternate}
+@keyframes aur{0%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(3%,-2%,0) rotate(4deg)}100%{transform:translate3d(-3%,2%,0) rotate(-3deg)}}
+#vignette{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at center,transparent 42%,rgba(3,7,11,.82) 100%)}
+#grain{position:fixed;inset:0;z-index:9;pointer-events:none;opacity:.045;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- Escenario 1920x1080 ---------- */
+#stage{position:fixed;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center center;z-index:2}
+.slide{position:absolute;inset:0;padding:100px 132px 120px;display:flex;flex-direction:column;opacity:0;visibility:hidden;
+  filter:blur(16px);transform:translateX(calc(var(--in,1)*90px)) scale(1.02);
+  transition:opacity .75s cubic-bezier(.2,.7,.2,1),filter .75s cubic-bezier(.2,.7,.2,1),transform .95s cubic-bezier(.2,.7,.2,1),visibility 0s linear .75s}
+.slide.leave{transform:translateX(calc(var(--in,1)*-90px)) scale(.98)}
+.slide.active{opacity:1;visibility:visible;filter:none;transform:none;transition:opacity .75s cubic-bezier(.2,.7,.2,1),filter .75s cubic-bezier(.2,.7,.2,1),transform .95s cubic-bezier(.2,.7,.2,1),visibility 0s}
+#wipe{position:fixed;top:0;bottom:0;left:0;width:2px;z-index:8;pointer-events:none;opacity:0;background:linear-gradient(180deg,transparent,var(--em2) 30%,var(--sky) 70%,transparent);box-shadow:0 0 40px 6px rgba(56,189,248,.5),-80px 0 140px 30px rgba(16,185,129,.10)}
+#wipe.go{animation:wf .95s cubic-bezier(.65,0,.35,1)}
+#wipe.go.b{animation-name:wb}
+@keyframes wf{0%{opacity:1;transform:translateX(-5vw)}100%{opacity:1;transform:translateX(105vw)}}
+@keyframes wb{0%{opacity:1;transform:translateX(105vw)}100%{opacity:1;transform:translateX(-5vw)}}
+
+/* Decoración inyectada */
+.bignum{position:absolute;right:90px;top:26px;font:700 260px/1 var(--disp);letter-spacing:-.06em;color:transparent;-webkit-text-stroke:2px rgba(56,189,248,.13);pointer-events:none;user-select:none;z-index:-1}
+.bignum::after{display:none;content:attr(data-t);position:absolute;right:6px;bottom:-14px;font:700 18px/1 var(--mono);letter-spacing:.3em;-webkit-text-stroke:0;color:rgba(125,211,252,.35);text-transform:uppercase;white-space:nowrap}
+.frame{position:absolute;inset:34px;pointer-events:none;z-index:-1}
+.frame i{position:absolute;width:44px;height:44px;border:2px solid rgba(56,189,248,.45)}
+.frame i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}
+.frame i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+.frame i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}
+.frame i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+.frame b{position:absolute;left:62px;right:62px;top:0;height:1px;background:linear-gradient(90deg,rgba(56,189,248,.4),transparent 25%,transparent 75%,rgba(56,189,248,.4))}
+
+/* Tipografía */
+.kicker{align-self:flex-start;font:700 21px/1 var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--sky2);display:inline-flex;align-items:center;gap:16px;padding:0}
+.kicker::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--em);box-shadow:0 0 12px var(--em),0 0 0 5px rgba(16,185,129,.18);animation:blink 2s ease-in-out infinite}
+@keyframes blink{50%{opacity:.35}}
+h1{font-family:var(--disp);font-weight:700;letter-spacing:-.04em}
+h2{font-family:var(--disp);font-size:80px;line-height:1.02;font-weight:700;letter-spacing:-.035em;margin:26px 0 14px;max-width:1500px;color:#fff}
+h2 .amb{color:var(--amb)}
+.w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.14em;margin-bottom:-.14em}
+.wi{display:inline-block;will-change:transform}
+.sub{font-size:30px;color:var(--tx2);line-height:1.35}
+.mono{font-family:var(--mono)}
+.em{color:var(--em)} .amb{color:var(--amb)} .sky{color:var(--sky)} .red{color:var(--red)} .gray{color:var(--gray)}
+
+/* Paneles de vidrio con borde degradado */
+.panel{position:relative;background:radial-gradient(460px circle at var(--mx,50%) var(--my,-80%),rgba(255,255,255,.075),transparent 60%),var(--pbg);border-radius:24px;backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);
+  box-shadow:0 30px 60px -30px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.06)}
+.panel::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;pointer-events:none;
+  background:linear-gradient(140deg,color-mix(in srgb,var(--c,var(--sky)) 75%,transparent),rgba(255,255,255,.05) 35%,rgba(255,255,255,.02) 65%,color-mix(in srgb,var(--c,var(--sky)) 40%,transparent));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.chip{display:inline-flex;align-items:center;gap:12px;padding:14px 22px;border-radius:12px;border:1px solid rgba(56,189,248,.25);background:linear-gradient(180deg,rgba(15,32,46,.85),rgba(7,16,24,.85));font:600 23px/1 var(--mono);color:var(--tx2);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--em);box-shadow:0 0 14px var(--em),0 0 0 6px rgba(16,185,129,.18);animation:blink 1.6s ease-in-out infinite}
+.foot{position:absolute;left:132px;right:132px;bottom:56px;font:500 19px/1.35 var(--mono);color:var(--tx3);display:flex;justify-content:space-between;gap:30px;padding-top:14px;border-top:1px solid rgba(56,189,248,.12)}
+
+/* ---------- S1 portada ---------- */
+#s1{justify-content:center}
+#s1 .brand{font-size:230px;line-height:.86;margin:40px 0 18px;
+  background:linear-gradient(100deg,#ffffff 0%,#d1fae5 30%,#10B981 55%,#38BDF8 80%,#ffffff 100%);background-size:220% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 9s ease-in-out infinite;filter:drop-shadow(0 10px 50px rgba(16,185,129,.35))}
+@keyframes shine{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
+#s1 .tag{font:600 26px/1 var(--mono);color:var(--sky2);letter-spacing:.14em;text-transform:uppercase}
+#s1 .hook{font-family:var(--disp);font-size:74px;line-height:1.06;font-weight:700;max-width:1080px;margin:64px 0 56px;letter-spacing:-.025em;position:relative;padding-left:40px}
+#s1 .hook::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:8px;border-radius:4px;background:linear-gradient(180deg,var(--em),var(--amb));box-shadow:0 0 24px rgba(245,158,11,.5)}
+#s1 .hook b{font-weight:700;background:linear-gradient(90deg,var(--amb2),#f97316);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 22px rgba(245,158,11,.35))}
+#s1 .meta{display:flex;flex-wrap:wrap;gap:14px;max-width:1150px}
+
+/* ---------- S2 clima ---------- */
+.stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:30px}
+.stat{padding:30px 30px 26px;overflow:hidden}
+.stat::after{content:"";position:absolute;left:-30%;right:-30%;top:-120px;height:220px;background:radial-gradient(closest-side,color-mix(in srgb,var(--c) 30%,transparent),transparent);pointer-events:none}
+.stat .lbl{font:700 20px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--tx2);min-height:54px;position:relative;z-index:1}
+.stat .num{font-family:var(--disp);font-size:92px;white-space:nowrap;font-weight:700;letter-spacing:-.05em;line-height:1;margin:20px 0 4px;font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,#fff 0%,var(--c) 85%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 26px color-mix(in srgb,var(--c) 55%,transparent))}
+.stat .unit{font-size:30px;font-weight:700;color:var(--tx)}
+.stat .det{font-size:23px;line-height:1.4;color:var(--tx2);margin-top:14px}
+.stat .det b{color:var(--tx)}
+.stat .p{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font:800 21px/1 var(--mono);padding:10px 14px;border-radius:10px;background:rgba(16,185,129,.14);color:var(--em2);border:1px solid rgba(16,185,129,.4)}
+.stat .p::before{content:"✓"}
+.ns{margin-top:24px;display:flex;align-items:center;gap:26px;padding:24px 32px;border-radius:20px;
+  background:repeating-linear-gradient(135deg,rgba(148,163,184,.08) 0 14px,rgba(148,163,184,.03) 14px 28px);border:1.5px dashed rgba(148,163,184,.55)}
+.ns .badge{font:800 22px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#0b1520;background:linear-gradient(180deg,#cbd5e1,#94a3b8);padding:13px 18px;border-radius:10px;white-space:nowrap;box-shadow:0 0 30px -6px rgba(148,163,184,.6)}
+.ns .txt{font-size:27px;color:#d2dae3;line-height:1.35}
+
+/* ---------- S3 pipeline ---------- */
+.nobox{display:inline-flex;gap:14px;margin-top:4px}
+.nobox span{font:700 21px/1 var(--mono);padding:11px 16px;border-radius:10px;border:1px solid rgba(239,68,68,.55);background:rgba(239,68,68,.08);color:#fca5a5;text-decoration:line-through;text-decoration-thickness:2px}
+.pipe{position:relative;margin-top:64px;height:300px}
+.pipe svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.flow{stroke:url(#pg);stroke-width:4;stroke-dasharray:12 14;fill:none;opacity:.9;animation:flow 1s linear infinite;filter:drop-shadow(0 0 6px rgba(56,189,248,.8))}
+@keyframes flow{to{stroke-dashoffset:-26}}
+.nodes{position:absolute;inset:0;display:grid;grid-template-columns:repeat(5,1fr);gap:40px;align-items:center}
+.node{padding:30px 24px;text-align:center;min-height:240px;display:flex;flex-direction:column;justify-content:center;transition:box-shadow .5s}
+.node.lit{box-shadow:0 0 0 1.5px var(--sky),0 0 70px -6px rgba(56,189,248,.75)}
+.node.lit::after{transform:scale(1.5)}
+.node::after{transition:transform .4s}
+.node::after{content:"";position:absolute;left:50%;top:-9px;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:var(--sky);box-shadow:0 0 0 6px rgba(56,189,248,.18),0 0 24px var(--sky)}
+.node:last-child::after{background:var(--em);box-shadow:0 0 0 6px rgba(16,185,129,.18),0 0 24px var(--em)}
+.node .n{font:800 19px/1 var(--mono);color:var(--sky2);letter-spacing:.12em}
+.node .t{font-family:var(--disp);font-size:36px;font-weight:700;margin:16px 0 12px;letter-spacing:-.02em;white-space:nowrap}
+.node .d{font-size:21px;color:var(--tx2);line-height:1.38}
+.seals{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:56px}
+.seal{padding:30px 32px;display:flex;align-items:center;gap:28px;--c:var(--em)}
+.seal .ic{width:92px;height:92px;flex:none;border-radius:50%;display:grid;place-items:center;font:800 42px/1 var(--disp);color:var(--em);position:relative;border:0!important;background:radial-gradient(circle,rgba(16,185,129,.18),transparent 70%)}
+.seal .ic::before{content:"";position:absolute;inset:0;border-radius:50%;padding:3px;background:conic-gradient(from 0deg,var(--em),transparent 60%,var(--em));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spin 4s linear infinite}
+.seal:nth-child(2){--c:var(--sky)}
+.seal:nth-child(2) .ic{color:var(--sky)!important;background:radial-gradient(circle,rgba(56,189,248,.18),transparent 70%)}
+.seal:nth-child(2) .ic::before{background:conic-gradient(from 0deg,var(--sky),transparent 60%,var(--sky))}
+@keyframes spin{to{transform:rotate(360deg)}}
+.seal .big{font-family:var(--disp);font-size:48px;font-weight:700;letter-spacing:-.03em}
+.seal .sm{font-size:21px;color:var(--tx2);margin-top:6px;line-height:1.38}
+
+/* ---------- S4 diagnóstico ---------- */
+.strip{display:grid;grid-template-columns:repeat(20,1fr);gap:10px;margin-top:40px}
+.cell{height:170px;border-radius:12px;background:linear-gradient(180deg,rgba(56,189,248,.16),rgba(56,189,248,.04));border:1px solid rgba(56,189,248,.25);position:relative;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;transition:transform .25s,box-shadow .25s}
+.cell:hover,.cell.sel{transform:translateY(-8px);box-shadow:0 14px 34px rgba(0,0,0,.5),0 0 0 2px rgba(255,255,255,.25)}
+.cell.bad{background:linear-gradient(180deg,rgba(239,68,68,.65),rgba(239,68,68,.18));border-color:var(--red);animation:alarm 2s ease-in-out infinite}
+@keyframes alarm{50%{box-shadow:0 0 34px rgba(239,68,68,.65)}}
+.cell.warn{background:linear-gradient(180deg,rgba(245,158,11,.55),rgba(245,158,11,.12));border-color:var(--amb);box-shadow:0 0 22px -6px rgba(245,158,11,.6)}
+.cell .iv{font:800 19px/1 var(--mono);writing-mode:vertical-rl;transform:rotate(180deg);color:#fff;position:absolute;top:14px;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.yl{display:grid;grid-template-columns:repeat(20,1fr);gap:10px;margin-top:12px}
+.yl span{font:600 16px/1 var(--mono);color:var(--tx3);text-align:center}
+.yl span.hl{color:var(--tx);font-weight:800}
+.tip{margin-top:20px;min-height:46px;font-size:26px;color:var(--tx2);padding:10px 18px;border-left:3px solid var(--sky);background:linear-gradient(90deg,rgba(56,189,248,.08),transparent 60%);border-radius:0 10px 10px 0}
+.tip b{color:var(--tx)}
+.diag{display:grid;grid-template-columns:1fr 1.25fr;gap:28px;margin-top:20px}
+.kpis{padding:30px 36px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-content:center}
+.kpi .v{font-family:var(--disp);font-size:66px;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.kpi .v.red{filter:drop-shadow(0 0 20px rgba(239,68,68,.55))}
+.kpi .l{font:700 17px/1.3 var(--mono);color:var(--tx2);text-transform:uppercase;letter-spacing:.08em;margin-top:8px}
+.bars{padding:28px 36px}
+.bar{display:grid;grid-template-columns:260px 1fr 140px;align-items:center;gap:20px;margin:12px 0}
+.bar .bl{font-size:24px;color:var(--tx2)}
+.bar .track{display:block;height:20px;border-radius:12px;background:rgba(148,163,184,.12);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+.bar .fill{display:block;height:100%;width:var(--w);border-radius:12px;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 55%,transparent),var(--c));box-shadow:0 0 18px color-mix(in srgb,var(--c) 70%,transparent)}
+.bar .bv{font:800 28px/1 var(--mono);text-align:right}
+.legend{display:flex;gap:30px;margin-top:18px;font-size:21px;color:var(--tx2)}
+.legend i{display:inline-block;width:18px;height:18px;border-radius:5px;vertical-align:-3px;margin-right:10px}
+
+/* ---------- S5 estrategias ---------- */
+.cards4{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:38px;flex:1;max-height:740px;perspective:1400px}
+.card{padding:32px 30px 26px;display:flex;flex-direction:column;overflow:hidden;transition:transform .35s,box-shadow .35s;box-shadow:0 30px 60px -30px rgba(0,0,0,.8),0 0 70px -40px var(--c)}
+.card::after{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(90deg,transparent,var(--c),transparent);box-shadow:0 0 30px var(--c)}
+.card:hover{box-shadow:0 40px 80px -30px rgba(0,0,0,.8),0 0 90px -30px var(--c)}
+.card .nm{font-family:var(--disp);font-size:44px;font-weight:700;color:var(--c);letter-spacing:-.02em}
+.card .rot{font:500 18px/1.5 var(--mono);color:var(--tx2);margin-top:10px;min-height:84px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.25)}
+.card .prod{font-family:var(--disp);font-size:82px;white-space:nowrap;font-weight:700;letter-spacing:-.05em;line-height:1;margin-top:18px;font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,#fff 10%,var(--c) 120%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.card .prod small{font-size:22px;color:var(--tx2);-webkit-text-fill-color:var(--tx2);font-weight:600;letter-spacing:0;display:block;margin-top:10px;font-family:var(--mono)}
+.card .track{height:12px;border-radius:8px;background:rgba(148,163,184,.12);margin:16px 0 18px;overflow:hidden}
+.card .fill{height:100%;width:var(--w);background:linear-gradient(90deg,color-mix(in srgb,var(--c) 40%,transparent),var(--c));border-radius:8px;box-shadow:0 0 16px var(--c)}
+.row{display:flex;justify-content:space-between;align-items:baseline;font-size:23px;padding:9px 0;border-bottom:1px solid rgba(148,163,184,.12)}
+.row span:first-child{color:var(--tx2)}
+.row b{font-family:var(--mono);font-size:24px}
+.pill{margin-top:auto;padding-top:16px}
+.pill span{display:inline-block;font:800 19px/1.2 var(--mono);padding:10px 14px;border-radius:10px;background:color-mix(in srgb,var(--c) 18%,transparent);border:1px solid color-mix(in srgb,var(--c) 55%,transparent);color:var(--c);margin:6px 6px 0 0}
+.pill span.to{background:rgba(245,158,11,.16);color:var(--amb2);border:1px solid rgba(245,158,11,.7);box-shadow:0 0 20px -4px rgba(245,158,11,.5)}
+
+/* ---------- S6 trazabilidad + MODIS ---------- */
+.two{display:grid;grid-template-columns:1fr 1.05fr;gap:30px;margin-top:34px;flex:1}
+.inv{padding:30px 34px;display:flex;flex-direction:column;--c:var(--em)}
+.inv h3,.chart h3{font:800 19px/1.3 var(--mono);color:var(--sky2);text-transform:uppercase;letter-spacing:.12em;margin-bottom:20px}
+.say{font-size:33px;line-height:1.5;font-weight:600;padding:22px 26px;border-radius:16px;background:rgba(3,9,14,.6);border:1px solid rgba(56,189,248,.2)}
+.tok{padding:2px 8px;border-radius:8px;transition:background .35s,color .35s,box-shadow .35s;font-family:var(--mono);font-size:30px;background:rgba(148,163,184,.1)}
+.tok.on{background:rgba(16,185,129,.25);color:#a7f3d0;box-shadow:0 0 0 2px rgba(16,185,129,.7),0 0 22px rgba(16,185,129,.5)}
+.ev{margin-top:20px;font:500 21px/1.55 var(--mono);color:var(--tx3);padding:18px 24px;border-radius:16px;background:rgba(3,9,14,.6);border:1px solid rgba(56,189,248,.2)}
+.ev .er{display:flex;justify-content:space-between;padding:3px 8px;border-radius:6px;transition:color .35s,background .35s}
+.ev .er .ck{opacity:0;color:var(--em);font-weight:800;transition:opacity .35s}
+.ev .er.on{color:var(--tx);background:rgba(16,185,129,.08)} .ev .er.on .ck{opacity:1}
+.assert{margin-top:18px;font:800 23px/1.35 var(--mono);color:var(--tx3);transition:color .4s,background .4s;padding:12px 16px;border-radius:10px;border:1px dashed rgba(148,163,184,.3)}
+.assert.on{color:var(--em2);background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.6);box-shadow:0 0 30px -8px rgba(16,185,129,.6)}
+.chart{padding:30px 34px;display:flex;flex-direction:column}
+.chart svg{width:100%;height:370px;overflow:visible}
+.chart .ax{stroke:rgba(148,163,184,.35);stroke-width:1.5}
+.chart .axt{fill:var(--tx3);font:500 15px var(--mono)}
+.chart .thr{stroke:var(--amb);stroke-width:2.5;stroke-dasharray:10 8;filter:drop-shadow(0 0 6px rgba(245,158,11,.8))}
+.chart .band{fill:url(#bandg)}
+.chart .pulse{transform-box:fill-box;transform-origin:center;animation:pz 1.8s ease-out infinite}
+@keyframes pz{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.8);opacity:0}}
+.mres{display:flex;gap:18px;margin-top:18px}
+.mres .m{flex:1;padding:18px 22px;border-radius:14px;border:1px solid rgba(56,189,248,.2);background:rgba(3,9,14,.55)}
+.mres .m:first-child{border-color:rgba(16,185,129,.55);box-shadow:0 0 30px -10px rgba(16,185,129,.6)}
+.mres .m .v{font-size:44px;font-weight:800;font-family:var(--mono)}
+.mres .m .l{font-size:19px;color:var(--tx2);margin-top:6px;line-height:1.38}
+
+/* ---------- S7 límites ---------- */
+.lim{display:grid;grid-template-columns:repeat(2,1fr);gap:28px;margin-top:46px}
+.lc{padding:40px 42px;display:flex;gap:32px;align-items:flex-start}
+.lc .code{flex:none;width:126px;height:126px;border-radius:24px;display:grid;place-items:center;font:800 32px/1 var(--mono);color:var(--sky2);border:2px solid rgba(56,189,248,.55);background:radial-gradient(circle at 30% 25%,rgba(56,189,248,.28),rgba(56,189,248,.04));box-shadow:0 0 40px -10px rgba(56,189,248,.6),inset 0 1px 0 rgba(255,255,255,.1)}
+.lc h4{font-family:var(--disp);font-size:42px;font-weight:700;letter-spacing:-.02em}
+.lc p{font-size:26px;color:var(--tx2);line-height:1.42;margin-top:12px}
+
+/* ---------- S8 sostenibilidad ---------- */
+.biz{display:grid;grid-template-columns:1fr 160px 1fr;gap:0;margin-top:44px;align-items:stretch}
+.col{padding:38px 42px;overflow:hidden;box-shadow:0 30px 60px -30px rgba(0,0,0,.8),0 0 90px -50px var(--c)}
+.col::after{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(90deg,transparent,var(--c),transparent);box-shadow:0 0 30px var(--c)}
+.col .h{font-family:var(--disp);font-size:48px;font-weight:700;color:var(--c);letter-spacing:-.02em}
+.col .hs{font:700 20px/1.35 var(--mono);color:var(--tx2);margin:10px 0 22px;text-transform:uppercase;letter-spacing:.08em}
+.col ul{list-style:none}
+.col li{font-size:27px;line-height:1.38;padding:14px 0 14px 44px;position:relative;border-bottom:1px solid rgba(148,163,184,.12)}
+.col li::before{content:"";position:absolute;left:4px;top:24px;width:16px;height:16px;border-radius:4px;background:var(--c);box-shadow:0 0 12px var(--c);transform:rotate(45deg)}
+.col li code{font-family:var(--mono);font-size:23px;color:var(--tx);background:rgba(148,163,184,.12);border:1px solid rgba(148,163,184,.18);padding:2px 8px;border-radius:6px}
+.mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;position:relative}
+.mid::before{content:"";position:absolute;left:10px;right:10px;top:50%;height:2px;background:linear-gradient(90deg,var(--em),var(--sky));box-shadow:0 0 14px var(--sky);z-index:-1}
+.mid .arrow{font-size:52px;color:#fff;width:96px;height:96px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#0e2a3a,#071018);border:2px solid var(--sky);box-shadow:0 0 40px rgba(56,189,248,.6)}
+.mid .mt{font:800 16px/1.4 var(--mono);color:var(--tx2);text-transform:uppercase;letter-spacing:.08em;background:var(--bg);padding:6px 8px;border-radius:6px}
+
+/* ---------- S9 cierre ---------- */
+#s9{justify-content:center;align-items:center;text-align:center}
+#s9 .kicker{align-self:center}
+.mono3{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;width:100%;margin:56px 0 60px}
+.mono3>div{position:relative;padding:24px 0}
+.mono3>div+div::before{content:"";position:absolute;left:-20px;top:20%;bottom:20%;width:1px;background:linear-gradient(180deg,transparent,rgba(56,189,248,.5),transparent)}
+.mono3 .v{font-family:var(--disp);font-size:210px;font-weight:700;letter-spacing:-.06em;line-height:.88;font-variant-numeric:tabular-nums;filter:drop-shadow(0 0 50px currentColor)}
+.mono3 .v span{background:linear-gradient(180deg,#fff 0%,currentColor 75%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.mono3 .l{font:700 26px/1.2 var(--mono);color:var(--tx2);margin-top:26px;text-transform:uppercase;letter-spacing:.12em}
+.cta{font-family:var(--disp);font-size:60px;font-weight:700;letter-spacing:-.03em;line-height:1.12}
+.cta span{background:linear-gradient(90deg,var(--em2),var(--sky));-webkit-background-clip:text;background-clip:text;color:transparent}
+.btn{display:inline-flex;margin-top:44px;font:800 27px/1 var(--mono);padding:26px 44px;border-radius:16px;color:#04130d;letter-spacing:.04em;position:relative;overflow:hidden;
+  background:linear-gradient(90deg,var(--em),var(--em2));box-shadow:0 0 0 1px rgba(255,255,255,.2) inset,0 20px 60px -10px rgba(16,185,129,.7)}
+.btn::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-50%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);animation:sweep 3.2s ease-in-out infinite}
+@keyframes sweep{0%{left:-50%}60%,100%{left:120%}}
+
+/* ---------- HUD (oculto en reposo; aparece al mover el mouse) ---------- */
+.hud{position:fixed;z-index:20;font-family:var(--mono);color:var(--tx2);user-select:none;transition:opacity .4s ease,transform .4s ease}
+body.idle .fade{opacity:0;pointer-events:none}
+body.idle{cursor:none}
+#dock{left:50%;bottom:26px;transform:translateX(-50%);display:flex;align-items:center;gap:2px;padding:6px;border-radius:999px;background:rgba(7,16,24,.72);border:1px solid rgba(56,189,248,.2);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 20px 50px -10px rgba(0,0,0,.7)}
+body.idle #dock{transform:translateX(-50%) translateY(18px)}
+#dock button{all:unset;cursor:pointer;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;color:var(--tx);transition:background .2s,color .2s}
+#dock button:hover{background:rgba(56,189,248,.18);color:var(--sky2)}
+#dock button:focus-visible{outline:2px solid var(--sky)}
+#dock svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#dock .sep{width:1px;height:18px;background:rgba(148,163,184,.25);margin:0 6px}
+#count{font:700 14px/1 var(--mono);padding:0 14px;color:var(--tx);font-variant-numeric:tabular-nums;letter-spacing:.1em}
+#progress{left:0;right:0;bottom:0;height:4px;background:rgba(148,163,184,.08)}
+#progress .seg{position:absolute;top:0;bottom:0;border-right:2px solid rgba(7,16,24,.95);background:transparent;cursor:pointer;transition:background .3s}
+#progress .seg.done{background:linear-gradient(90deg,rgba(56,189,248,.25),rgba(56,189,248,.4))}
+#progress .seg.cur{background:linear-gradient(90deg,var(--em),var(--sky));box-shadow:0 0 16px rgba(16,185,129,.8)}
+#notes{left:20px;bottom:24px;width:min(560px,42vw);padding:16px 18px;border-radius:14px;background:rgba(7,16,24,.94);border:1px solid rgba(56,189,248,.3);font-family:var(--sans);font-size:15px;line-height:1.5;color:var(--tx);display:none;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+#notes.show{display:block}
+#notes .nh{font:700 12px/1 var(--mono);color:var(--sky);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between}
+#toast{left:50%;top:26px;transform:translateX(-50%) translateY(-10px);padding:10px 18px;border-radius:999px;background:rgba(7,16,24,.85);border:1px solid rgba(56,189,248,.3);font:700 13px/1 var(--mono);letter-spacing:.1em;color:var(--tx);opacity:0;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%)}
+.overlay{position:fixed;inset:0;z-index:30;display:none;background:rgba(4,9,14,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);font-family:var(--sans)}
+.overlay.show{display:grid;animation:ovin .35s ease}
+@keyframes ovin{from{opacity:0}to{opacity:1}}
+#overview{padding:8vh 9vw;align-content:center;grid-template-columns:repeat(3,1fr);gap:20px}
+.ov{padding:26px 28px;border-radius:18px;border:1px solid rgba(56,189,248,.2);background:linear-gradient(160deg,rgba(16,34,50,.7),rgba(8,18,28,.7));cursor:pointer;transition:transform .25s,border-color .25s,box-shadow .25s}
+.ov:hover,.ov.cur{transform:translateY(-4px);border-color:var(--em);box-shadow:0 0 40px -12px rgba(16,185,129,.6)}
+.ov .n{font:700 44px/1 var(--disp);color:var(--sky2);letter-spacing:-.03em}
+.ov .t{font:600 20px/1.3 var(--sans);margin-top:14px;color:var(--tx)}
+#helpcard{place-items:center}
+#helpcard .hc{width:min(720px,88vw);padding:36px 40px;border-radius:22px;border:1px solid rgba(56,189,248,.25);background:linear-gradient(160deg,rgba(16,34,50,.9),rgba(8,18,28,.9))}
+#helpcard h5{font:700 14px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--sky2);margin-bottom:22px}
+#helpcard .kv{display:grid;grid-template-columns:230px 1fr;gap:12px 20px;font-size:17px;color:var(--tx2);align-items:center}
+#helpcard kbd{font:700 14px/1 var(--mono);color:var(--tx);padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:rgba(148,163,184,.08);justify-self:start}
+
+
+/* ---- 7 diapositivas ---- */
+#s3 .pipe{margin-top:44px;height:270px}
+#s3 .seals{margin-top:44px}
+.invpill{margin-top:30px;display:flex;align-items:center;gap:22px;padding:18px 28px;border-radius:16px;border:1px dashed rgba(16,185,129,.55);background:rgba(16,185,129,.07);font-size:25px;color:var(--tx2)}
+.invpill code{font:800 24px/1 var(--mono);color:var(--em2);background:rgba(16,185,129,.14);padding:9px 14px;border-radius:10px;white-space:nowrap}
+#s6 h2{font-size:66px}
+.two6{display:grid;grid-template-columns:1.45fr 1fr;gap:28px;margin-top:26px;flex:1}
+#s6 .chart svg{height:350px}
+.lim6{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-content:start}
+.lc2{padding:26px;display:flex;flex-direction:column;gap:12px}
+.lc2 .code{font:800 26px/1 var(--mono);color:var(--sky2);padding:10px 14px;border-radius:12px;border:1.5px solid rgba(56,189,248,.5);background:rgba(56,189,248,.1);align-self:flex-start}
+.lc2 h4{font:700 31px/1.1 var(--disp);letter-spacing:-.02em}
+.lc2 p{font-size:21px;color:var(--tx2);line-height:1.4}
+#s7 h2{font-size:62px}
+#s7 .biz{margin-top:26px;grid-template-columns:1fr 100px 1fr}
+#s7 .col{padding:26px 34px}
+#s7 .col .h{font-size:40px}
+#s7 .col .hs{font-size:17px;margin:6px 0 10px}
+#s7 .col li{font-size:23px;padding:11px 0 11px 40px}
+#s7 .col li::before{top:20px}
+#s7 .mid .arrow{width:72px;height:72px;font-size:38px}
+.fin{display:grid;grid-template-columns:repeat(3,auto) 1fr;gap:60px;align-items:center;margin-top:26px;padding:24px 44px}
+.fin .v{font:700 120px/.9 var(--disp);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.fin .v span{background:linear-gradient(180deg,#fff,currentColor 80%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.fin .l{font:700 17px/1.2 var(--mono);color:var(--tx2);text-transform:uppercase;letter-spacing:.1em;margin-top:12px}
+.fin .cta2{text-align:right;font:700 38px/1.15 var(--disp);letter-spacing:-.02em}
+.fin .cta2 span{color:var(--em2)}
+/* panel de defensa */
+#qa{overflow:auto;place-items:start center;padding:6vh 6vw}
+#qa .qh{font:700 14px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--sky2);margin-bottom:26px;width:min(1400px,100%)}
+#qalist{column-count:2;column-gap:26px;width:min(1400px,100%)}
+#qalist h6{column-span:all;font:700 13px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--em2);margin:22px 0 14px;padding-bottom:10px;border-bottom:1px solid rgba(16,185,129,.3)}
+.qc{break-inside:avoid;margin-bottom:16px;padding:18px 22px;border-radius:14px;border:1px solid rgba(56,189,248,.2);background:linear-gradient(160deg,rgba(16,34,50,.8),rgba(8,18,28,.8))}
+.qc .q{font:700 18px/1.3 var(--sans);color:var(--tx);margin-bottom:8px}
+.qc .a{font:400 15.5px/1.5 var(--sans);color:var(--tx2)}
+.qc .r{font:700 12px/1.4 var(--mono);color:var(--amb2);margin-top:10px;letter-spacing:.04em}
+.qc.warn{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.07)}
+.qc.warn .q{color:#fca5a5}
+#nBody{white-space:pre-line}
+@media (max-width:900px){#qalist{column-count:1}}
+
+/* ---------- Impresión ---------- */
+@media print{
+  @page{size:1920px 1080px;margin:0}
+  html,body{overflow:visible;height:auto;background:#071018;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #bg,#vignette,#aurora,#grain,#wipe,.hud,.overlay{display:none!important}
+  #stage{position:static;transform:none!important;width:1920px;height:auto}
+  .slide{position:relative;inset:auto;width:1920px;height:1080px;opacity:1!important;visibility:visible!important;filter:none!important;transform:none!important;page-break-after:always;break-after:page;
+    background:radial-gradient(1000px 600px at 80% 30%,rgba(56,189,248,.12),transparent 60%),radial-gradient(800px 500px at 10% 90%,rgba(16,185,129,.08),transparent 60%),#071018}
+  .slide *{opacity:1!important;transform:none!important}
+  .fill{width:var(--w)!important}
+  .flow,.cell.bad,.seal .ic::before,.btn::after,#s1 .brand{animation:none!important}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}.slide{filter:none;transform:none}}
+</style>
+
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div id="aurora"></div>
+<div id="vignette"></div>
+<div id="grain"></div>
+<div id="wipe"></div>
+
+<main id="stage" aria-live="polite">
+
+<section class="slide" id="s1" data-title="Portada & El Problema">
+  <div class="kicker" data-a>NASA Space Apps Challenge 2026 · Field Shift</div>
+  <h1 class="brand" data-a>RotaClima</h1>
+  <div class="tag" data-a>Soporte de decisión determinista · 35 años de NASA POWER</div>
+  <p class="hook" data-a>Tu rotación fue diseñada para <b>un clima que ya no existe.</b></p>
+  <div class="meta">
+    <span class="chip" data-a><i class="dot"></i>Cuatro Cañadas / Pailón, Santa Cruz</span>
+    <span class="chip" data-a>−17.30°, −62.25° · 280.15 m</span>
+    <span class="chip" data-a>Suelo franco · AWC 155 mm/m · CN 78</span>
+    <span class="chip" data-a>Actual: soya@11-16 + soya@05-01</span>
+  </div>
+</section>
+
+<section class="slide" id="s2" data-title="Tu Clima Cambió">
+  <div class="kicker" data-a>NASA POWER · 1991–2006 vs 2010–2025</div>
+  <h2 data-a>Tu clima cambió. Y es estadísticamente medible.</h2>
+  <p class="sub" data-a>Mann-Whitney U bilateral · α = 0.10 · mismo punto, mismas 10 variables diarias</p>
+  <div class="stats4">
+    <div class="stat panel" style="--c:var(--sky)" data-a>
+      <div class="lbl">Duración estación lluviosa</div>
+      <div class="num"><span data-count="64.1" data-dec="1" data-pre="−">−64.1</span></div>
+      <div class="unit">días</div>
+      <div class="det">Inicio <b>+27.6 d</b> más tarde (p = 0.0016) · cese <b>−38.1 d</b> antes</div>
+      <span class="p">p = 0.0055</span>
+    </div>
+    <div class="stat panel" style="--c:var(--amb)" data-a>
+      <div class="lbl">Días con calor extremo &gt;35 °C</div>
+      <div class="num"><span data-count="27.7" data-dec="1" data-pre="+">+27.7</span></div>
+      <div class="unit">días / campaña</div>
+      <div class="det">52.7 → 80.5 días por campaña</div>
+      <span class="p">p = 0.0084</span>
+    </div>
+    <div class="stat panel" style="--c:var(--sky)" data-a>
+      <div class="lbl">Lluvia total por campaña</div>
+      <div class="num"><span data-count="195.9" data-dec="1" data-pre="−">−195.9</span></div>
+      <div class="unit">mm</div>
+      <div class="det">1342.2 → 1146.3 mm</div>
+      <span class="p">p = 0.0114</span>
+    </div>
+    <div class="stat panel" style="--c:var(--sky)" data-a>
+      <div class="lbl">Lluvia Q2 · siembra de verano</div>
+      <div class="num"><span data-count="178.3" data-dec="1" data-pre="−">−178.3</span></div>
+      <div class="unit">mm</div>
+      <div class="det">El trimestre que decide la soya de verano</div>
+      <span class="p">p = 0.0006</span>
+    </div>
+  </div>
+  <div class="ns" data-a>
+    <span class="badge">No significativo</span>
+    <span class="txt"><b>ET0 total</b> (+65.0 mm, p = 0.1057) · <b>lluvia Q1</b> (p = 0.9669) · <b>lluvia Q3</b> · <b>lluvia Q4</b> — lo mostramos igual.</span>
+  </div>
+  <div class="foot"><span>10 variables diarias · 12,784 días (1991-01-01 → 2025-12-31) · 34 campañas (inicio 07-01)</span><span>PRECTOTCORR · T2M · T2M_MAX · T2M_MIN · RH2M · ALLSKY_SFC_SW_DWN · WS2M · GWETTOP · GWETROOT · PS</span></div>
+</section>
+
+<section class="slide" id="s3" data-title="Motor 100% Determinista">
+  <div class="kicker" data-a>Motor biofísico</div>
+  <h2 data-a>100% determinista. Cero cajas negras.</h2>
+  <div class="nobox" data-a><span>Machine Learning</span><span>LLMs inventando cifras</span></div>
+  <div class="pipe">
+    <svg viewBox="0 0 1656 300" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="pg" x1="0" x2="1"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#10B981"/></linearGradient><radialGradient id="pk"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="#7DD3FC"/><stop offset="1" stop-color="#38BDF8" stop-opacity="0"/></radialGradient></defs><path id="pipePath" class="flow" d="M80 150 H1576"/><circle r="16" fill="url(#pk)"><animateMotion dur="3.2s" repeatCount="indefinite"><mpath href="#pipePath"/></animateMotion></circle><circle r="12" fill="url(#pk)"><animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite"><mpath href="#pipePath"/></animateMotion></circle></svg>
+    <div class="nodes">
+      <div class="node panel" data-node><div class="n">01 · DATOS</div><div class="t">POWER</div><div class="d">10 variables diarias<br>12,784 días</div></div>
+      <div class="node panel" data-node><div class="n">02 · ET0</div><div class="t">FAO-56 PM</div><div class="d">Penman-Monteith en 100% de los días demo · Hargreaves de respaldo</div></div>
+      <div class="node panel" data-node><div class="n">03 · ESTADO</div><div class="t">Spin-up 180 d</div><div class="d">El suelo arranca equilibrado, no en cero</div></div>
+      <div class="node panel" data-node><div class="n">04 · AGUA</div><div class="t">SCS-CN</div><div class="d">Escorrentía USDA TR-55<br>CN = 78</div></div>
+      <div class="node panel" data-node><div class="n">05 · CULTIVO</div><div class="t">EcoCrop</div><div class="d">FAO EcoCrop + Teixeira et al. (2013)</div></div>
+    </div>
+  </div>
+  <div class="seals">
+    <div class="seal panel" data-a><div class="ic">✓</div><div><div class="big">159 tests</div><div class="sm">100% en verde · automatizados</div></div></div>
+    <div class="seal panel" data-a><div class="ic" style="border-color:var(--sky);color:var(--sky)">r</div><div><div class="big">r = 0.5501</div><div class="sm">Humedad del suelo vs MERRA-2 (gwetroot) · N = 9,180 días · p &lt; 10⁻⁴</div></div></div>
+    <div class="seal panel" data-a><div class="ic">0</div><div><div class="big">0 pendientes</div><div class="sm">crops.json verificado · 13 cultivos · 130 campos agronómicos</div></div></div>
+  </div>
+  <div class="invpill" data-a><code>text ⊂ evidence[].value</code><span>Cada cifra que ves en el texto existe en la evidencia. Trazable por diseño.</span></div>
+</section>
+
+<section class="slide" id="s4" data-title="Diagnóstico Rotación Actual">
+  <div class="kicker" data-a>Rotación actual · soya@11-16 + soya@05-01</div>
+  <h2 data-a>20 campañas. 1 mala. 2 al borde.</h2>
+  <div class="strip" id="strip" aria-label="Campañas 2005/06 a 2024/25"></div>
+  <div class="yl" id="yl"></div>
+  <div class="tip" id="tip">Toca una campaña para ver su detalle.</div>
+  <div class="diag">
+    <div class="kpis panel" data-a>
+      <div class="kpi"><div class="v">0.7644</div><div class="l">mean_I</div></div>
+      <div class="kpi"><div class="v">100.0%</div><div class="l">Prod. base (1.5288)</div></div>
+      <div class="kpi"><div class="v red">1/20</div><div class="l">Campañas malas</div></div>
+    </div>
+    <div class="bars panel" data-a>
+      <div class="bar"><span class="bl">Salud de suelo</span><span class="track"><span class="fill" style="--w:47.90%;--c:var(--amb)"></span></span><span class="bv">47.90</span></div>
+      <div class="bar"><span class="bl">Diversidad</span><span class="track"><span class="fill" style="--w:15%;--c:var(--red)"></span></span><span class="bv">15.0</span></div>
+      <div class="bar"><span class="bl">Erosión</span><span class="track"><span class="fill" style="--w:63.26%;--c:var(--sky)"></span></span><span class="bv">63.26%</span></div>
+    </div>
+  </div>
+  <div class="legend"><span><i style="background:var(--red)"></i>Mala · calor</span><span><i style="background:var(--amb)"></i>Peores 3 · agua</span><span><i style="background:rgba(56,189,248,.35)"></i>Fuera de las 3 peores</span></div>
+</section>
+
+<section class="slide" id="s5" data-title="4 Estrategias">
+  <div class="kicker" data-a>Mismo clima real · últimas 20 campañas</div>
+  <h2 data-a>4 estrategias, frente a frente.</h2>
+  <div class="cards4">
+    <div class="card panel" style="--c:#94A3B8" data-card>
+      <div class="nm">Actual</div>
+      <div class="rot">soya@11-16<br>+ soya@05-01</div>
+      <div class="prod"><span data-count="100.0" data-dec="1" data-suf="%">100.0%</span><small>prod. 1.5288</small></div>
+      <div class="track"><div class="fill" style="--w:86.66%"></div></div>
+      <div class="row"><span>Malas</span><b class="red">1/20</b></div>
+      <div class="row"><span>Suelo</span><b>47.90</b></div>
+      <div class="row"><span>mean_I</span><b>0.7644</b></div>
+      <div class="row"><span>Erosión</span><b>63.26%</b></div>
+      <div class="pill"><span>Línea base</span></div>
+    </div>
+    <div class="card panel" style="--c:var(--em)" data-card>
+      <div class="nm">Adaptada</div>
+      <div class="rot">mijo@11-16<br>+ soya@03-16</div>
+      <div class="prod"><span data-count="112.4" data-dec="1" data-suf="%">112.4%</span><small>prod. 1.7177</small></div>
+      <div class="track"><div class="fill" style="--w:97.40%"></div></div>
+      <div class="row"><span>Malas</span><b class="em">0/20</b></div>
+      <div class="row"><span>Suelo</span><b>63.82</b></div>
+      <div class="row"><span>mean_I</span><b>0.8589</b></div>
+      <div class="row"><span>Erosión</span><b>73.60%</b></div>
+      <div class="pill"><span>0/20 malas</span><span>+12.4% prod.</span></div>
+    </div>
+    <div class="card panel" style="--c:var(--sky)" data-card>
+      <div class="nm">Regenerativa</div>
+      <div class="rot">crotalaria@10-16 + sorgo@02-16<br>| girasol@11-01 + mijo@04-16</div>
+      <div class="prod"><span data-count="86.3" data-dec="1" data-suf="%">86.3%</span><small>prod. 1.3193</small></div>
+      <div class="track"><div class="fill" style="--w:74.78%"></div></div>
+      <div class="row"><span>Malas</span><b class="em">0/20</b></div>
+      <div class="row"><span>Suelo</span><b class="sky">79.03</b></div>
+      <div class="row"><span>mean_I</span><b>0.8795</b></div>
+      <div class="row"><span>Erosión · M.O.</span><b>86.12% · 100.0</b></div>
+      <div class="pill"><span>Mejor suelo 79.03</span><span>3 familias</span></div>
+    </div>
+    <div class="card panel" style="--c:#A78BFA" data-card>
+      <div class="nm">Diversificada</div>
+      <div class="rot">algodon@09-16 + sorgo@04-01<br>| mijo@11-16 + girasol@03-16</div>
+      <div class="prod"><span data-count="115.4" data-dec="1" data-suf="%">115.4%</span><small>prod. 1.7638</small></div>
+      <div class="track"><div class="fill" style="--w:100%"></div></div>
+      <div class="row"><span>Malas</span><b class="em">0/20</b></div>
+      <div class="row"><span>Suelo</span><b>60.56</b></div>
+      <div class="row"><span>mean_I</span><b>0.8819</b></div>
+      <div class="row"><span>Erosión</span><b>82.88%</b></div>
+      <div class="pill"><span>Mayor prod. 115.4%</span><span class="to">Trade-off: N = 10.0/100</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s6" data-title="Validación y Límites">
+  <div class="kicker" data-a>Backtest satelital · Límites declarados S1–S12</div>
+  <h2 data-a>Validado desde el espacio. Honesto con sus límites.</h2>
+  <div class="two6">
+    <div class="chart panel" data-a>
+      <h3>Backtest NASA MODIS · MOD13Q1 v061 · 250 m · 80 compuestos</h3>
+      <svg id="modis" viewBox="0 0 820 440" role="img" aria-label="max_ndvi por campaña con tercil inferior"></svg>
+      <div class="mres">
+        <div class="m"><div class="v em">1 de 1</div><div class="l">La única campaña mala (2016/17, max_ndvi 0.7160) cae en el tercil inferior (≤ 0.7260)</div></div>
+        <div class="m"><div class="v gray">ρ = −0.062</div><div class="l">Spearman, p = 0.796 — sin maquillar: 1 píxel de 250 m vs clima regional ~50 km</div></div>
+      </div>
+    </div>
+    <div class="lim6">
+      <div class="lc2 panel" data-a><span class="code">~50 km</span><h4>Clima regional</h4><p>NASA POWER describe la región, no el microclima de tu lote.</p></div>
+      <div class="lc2 panel" data-a><span class="code">S4</span><h4>Suelo desacoplado</h4><p>El índice de suelo no retroalimenta el rendimiento simulado.</p></div>
+      <div class="lc2 panel" data-a><span class="code">S10</span><h4>Sin precios inventados</h4><p>Rendimiento relativo, no dólares. No fabricamos márgenes.</p></div>
+      <div class="lc2 panel" data-a><span class="code">⟲</span><h4>Histórico, no pronóstico</h4><p>Backtest determinista sobre 35 años reales. No predice la próxima campaña.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s7" data-title="Sostenibilidad y Cierre">
+  <div class="kicker" data-a>Open Science + B2B</div>
+  <h2 data-a>Abierto para el productor. Sostenible con instituciones.</h2>
+  <div class="biz">
+    <div class="col panel" style="--c:var(--em)" data-a>
+      <div class="h">Productor individual</div>
+      <div class="hs">Gratis · abierto · anónimo</div>
+      <ul>
+        <li><b>100% gratuito</b>, sin registro ni paywall</li>
+        <li>Anónimo, sobre datos públicos de NASA</li>
+        <li>Sin recortar <code>p-valores</code> ni <code>S1–S12</code></li>
+      </ul>
+    </div>
+    <div class="mid" data-a><div class="arrow">⇄</div></div>
+    <div class="col panel" style="--c:var(--sky)" data-a>
+      <div class="h">Capa B2B institucional</div>
+      <div class="hs">Cooperativas · Aseguradoras · Bancos rurales · Semilleras</div>
+      <ul>
+        <li>Por polígono: <code>CHIRPS ~5 km</code> / <code>IMERG ~10 km</code> + <code>MODIS/Sentinel-2</code></li>
+        <li>Fase <code>ENSO (ONI)</code> / <code>NMME</code> + calibración privada (<code>GDD</code>, <code>Ky</code>, <code>$/ha</code>)</li>
+        <li>API <code>/analyze/batch</code> multi-lote con <code>X-API-Key</code></li>
+      </ul>
+    </div>
+  </div>
+  <div class="fin panel" data-a>
+    <div><div class="v sky"><span data-count="35" data-dec="0">35</span></div><div class="l">años de NASA POWER</div></div>
+    <div><div class="v em"><span data-count="159" data-dec="0">159</span></div><div class="l">tests en verde</div></div>
+    <div><div class="v amb"><span data-count="3" data-dec="0">3</span></div><div class="l">clics para decidir</div></div>
+    <div class="cta2">Antes de sembrar, pon tu rotación contra <span>el clima que realmente tienes.</span></div>
+  </div>
+</section>
+
+</main>
+
+<!-- HUD (oculto en reposo) -->
+<div class="hud fade" id="dock">
+  <button id="prev" aria-label="Anterior" title="Anterior (←)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <span id="count">01 / 09</span>
+  <button id="next" aria-label="Siguiente" title="Siguiente (→)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  <span class="sep"></span>
+  <button id="ovb" aria-label="Vista general" title="Vista general (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1"/></svg></button>
+  <button id="fs" aria-label="Pantalla completa" title="Pantalla completa (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+</div>
+<div class="hud fade" id="progress"></div>
+<div class="hud" id="notes"><div class="nh"><span id="nTitle">Notas</span><span id="nWin"></span></div><div id="nBody"></div></div>
+<div class="hud" id="toast"></div>
+<div class="overlay" id="overview"></div>
+<div class="overlay" id="qa"><div class="qh">Defensa ante el jurado · Esc para cerrar</div><div id="qalist"></div></div>
+<div class="overlay" id="helpcard"><div class="hc"><h5>Atajos</h5><div class="kv">
+  <kbd>← → · Space</kbd><span>Anterior / siguiente</span>
+  <kbd>Rueda · swipe · clic</kbd><span>Moverse entre diapositivas</span>
+  <kbd>1 – 9</kbd><span>Ir a una diapositiva</span>
+  <kbd>F</kbd><span>Pantalla completa</span>
+  <kbd>G</kbd><span>Vista general</span>
+  <kbd>T</kbd><span>Notas del orador + preguntas probables</span>
+  <kbd>Q</kbd><span>Defensa ante el jurado (preguntas y respuestas)</span>
+  <kbd>A</kbd><span>Avance automático (5:00)</span>
+  <kbd>Esc</kbd><span>Cerrar paneles</span>
+  <kbd>?</kbd><span>Esta ayuda</span>
+</div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* =====================================================================
+   DATOS (solo cifras verificadas)
+   ===================================================================== */
+var SCHEDULE = [0,30,70,110,140,195,245,300]; // segundos (5:00)
+var TOTAL = 300;
+var NOTES = [
+ "Gancho: «Tu rotación fue diseñada para un clima que ya no existe.» Ubica el caso: Cuatro Cañadas/Pailón, soya + soya. Promesa: comparar tu rotación y 3 alternativas contra 35 años de datos reales de NASA, sin ML.",
+ "Cuatro cambios significativos: −64.1 d de lluvia, +27.7 d >35 °C, −195.9 mm, Q2 −178.3 mm. Señala el badge gris: ET0 total y lluvia Q1 NO son significativos y lo mostramos igual. Esa honestidad es tu sello.",
+ "Pipeline: POWER → FAO-56 → spin-up 180 d → SCS-CN → EcoCrop. Sin ML ni LLM. 159 tests, r = 0.5501 vs MERRA-2, 0 pendientes. Cierra con el invariante: cada cifra del texto está en la evidencia.",
+ "Rotación actual: mean_I 0.7644, 1/20 mala (2016/17, calor, I 0.5541); 2023/24 y 2015/16 por agua. Suelo 47.90/100, diversidad 15.0. Toca 2016/17 en la tira.",
+ "El centro del pitch. Adaptada 112.4% y 0/20; Regenerativa con el mejor suelo (79.03); Diversificada 115.4% pero N = 10.0/100, trade-off declarado. No impongas una: el productor decide.",
+ "Backtest MODIS: la única campaña mala cae en el tercil inferior (1 de 1). Di tú el ρ = −0.062 (p = 0.796) antes que el jurado y explica 250 m vs ~50 km. Luego los límites: ~50 km, S4, S10, histórico no pronóstico.",
+ "Gratis y abierto para el productor; B2B con polígonos, ENSO/NMME, calibración privada y /analyze/batch. Cierra: 35 años · 159 tests · 3 clics. Silencio y CTA."
+];
+var QA = [{"cat": "Rigor científico", "q": "¿Por qué no usan Machine Learning?", "a": "Porque una decisión de siembra tiene que poder auditarse. Cada número sale de ecuaciones publicadas (FAO-56 Penman-Monteith, SCS-CN, FAO EcoCrop) aplicadas a datos NASA: el mismo dato da siempre el mismo resultado, y ningún texto puede mostrar una cifra que no esté en la evidencia (text ⊂ evidence[].value).", "ref": "159 tests en verde · 0 cajas negras · 0 LLM inventando cifras", "s": [2]}, {"cat": "Rigor científico", "q": "¿Cómo validaron el motor?", "a": "Con dos pruebas distintas. Humedad del suelo simulada contra MERRA-2 (gwetroot): r = 0.5501 con N = 9,180 días activos, p < 10⁻⁴. Y un backtest satelital MODIS MOD13Q1: la única campaña mala (2016/17) cae en el tercil inferior, 1 de 1. Son verificaciones de coherencia, no una garantía de rendimiento.", "ref": "r = 0.5501 · 1 de 1 en tercil inferior", "s": [2, 5]}, {"cat": "Rigor científico", "q": "¿La validación contra MERRA-2 es independiente?", "a": "No la vendemos como independiente: MERRA-2 es el reanálisis del que NASA POWER toma sus variables de humedad de suelo. Es una verificación de coherencia de la dinámica de humedad, no una validación de rendimiento. Por eso la mostramos junto al backtest MODIS, que es una fuente satelital distinta.", "ref": "Coherencia ≠ validación de rendimiento", "s": [2]}, {"cat": "Rigor científico", "q": "ρ = −0.062: ¿no contradice su backtest?", "a": "Lo mostramos sin maquillar a propósito. Con 20 puntos no hay correlación (p = 0.796) y lo explicamos: un píxel MODIS de 250 m refleja el manejo real, que cambia cada campaña, mientras nuestra simulación aplica una rotación fija con clima regional de ~50 km. El 1 de 1 es consistente, pero con una sola campaña mala no lo presentamos como prueba estadística.", "ref": "ρ = −0.062 (p = 0.796) · 250 m vs ~50 km", "s": [5]}, {"cat": "Rigor científico", "q": "¿Los cambios de clima son reales o ruido?", "a": "Usamos Mann-Whitney U bilateral, que no asume normalidad, comparando 1991–2006 contra 2010–2025. De los cinco cambios principales, cuatro tienen p < 0.01 (lluvia Q2 p = 0.0006, inicio de lluvias p = 0.0016, duración p = 0.0055, calor >35 °C p = 0.0084) y la lluvia total p = 0.0114. Lo que no es significativo lo etiquetamos: ET0 total (p = 0.1057) y lluvia Q1 (p = 0.9669).", "ref": "α = 0.10 declarado · p exactos visibles", "s": [1]}, {"cat": "Rigor científico", "q": "¿Esto es un pronóstico?", "a": "No. Es un backtest determinista: pone cada rotación frente a las últimas 20 campañas reales (2005/06–2024/25) y responde cómo le habría ido, no cómo le irá. La ponderación prospectiva por ENSO/NMME pertenece a la capa institucional.", "ref": "Histórico determinista, no pronóstico", "s": [3, 4]}, {"cat": "Datos y alcance", "q": "¿Qué datos de NASA usan?", "a": "NASA POWER: 10 variables diarias (lluvia, temperaturas media, máxima y mínima, humedad relativa, radiación, viento, humedad de suelo superficial y de raíz, presión), 12,784 días de 1991 a 2025 y 34 campañas del hemisferio sur. NASA MODIS MOD13Q1 v061 a 250 m (80 compuestos estivales) para el backtest, y MERRA-2 para comparar humedad de suelo.", "ref": "POWER · MODIS · MERRA-2", "s": [1, 2]}, {"cat": "Datos y alcance", "q": "¿Qué tan preciso es para MI lote?", "a": "Con honestidad: el clima es regional, ~50 km (S1), y el índice de suelo no retroalimenta el rendimiento (S4). Es una herramienta para comparar rotaciones en la zona, no para predecir un lote. Para escalar por polígono, la capa institucional usa CHIRPS ~5 km / IMERG ~10 km más MODIS/Sentinel-2.", "ref": "Límites S1–S12 declarados en la app", "s": [5, 6]}, {"cat": "Datos y alcance", "q": "¿Solo funciona en Santa Cruz?", "a": "El escenario verificado de punta a punta es Cuatro Cañadas / Pailón (−17.30°, −62.25°, suelo franco, soya + soya). El motor trabaja por punto con datos de NASA POWER, que cubren todo el planeta, pero no afirmamos resultados verificados fuera de este caso.", "ref": "Demo verificada: 1 escenario", "s": [0, 6]}, {"cat": "Producto y resultados", "q": "¿Qué significa 112.4%?", "a": "Rendimiento relativo frente a la rotación actual, que es 100.0%. No son kg/ha ni dólares: no inventamos precios (S10). La Adaptada (mijo@11-16 + soya@03-16) rinde 112.4% con 0/20 campañas malas, contra 1/20 de la actual.", "ref": "Relativo, no absoluto · S10", "s": [4]}, {"cat": "Producto y resultados", "q": "¿Cuál estrategia recomiendan?", "a": "No imponemos una: mostramos el trade-off con sus números. Adaptada: +12.4% y 0/20 malas. Diversificada: la mayor producción (115.4%) pero Nitrógeno 10.0/100. Regenerativa: el mejor suelo (79.03 contra 47.90) con 86.3% de producción. El productor decide según su prioridad.", "ref": "Trade-offs declarados, decisión del productor", "s": [4]}, {"cat": "Producto y resultados", "q": "¿Qué le pasa a la rotación actual?", "a": "Un solo año malo en 20: 2016/17 (I = 0.5541) por calor. 2023/24 (0.6796) y 2015/16 (0.6814) son las siguientes peores, por agua. Y es la de menor salud de suelo de las cuatro: 47.90/100, con diversidad 15.0.", "ref": "1/20 mala · suelo 47.90/100", "s": [3]}, {"cat": "Producto y resultados", "q": "¿Por qué el suelo no afecta el rendimiento simulado?", "a": "Es un límite declarado (S4): el suelo se evalúa como un eje de decisión propio y no retroalimenta el rendimiento simulado. Preferimos decirlo antes que sugerir una causalidad que no modelamos.", "ref": "S4 · límite declarado", "s": [5]}, {"cat": "Producto y resultados", "q": "¿En qué se diferencia de otros modelos de cultivo?", "a": "No competimos con modelos de cultivo detallados, que suelen requerir calibración y datos que un productor no tiene. RotaClima compara rotaciones en 3 clics con solo datos públicos de NASA, con todo el cálculo visible y trazable, y es gratuito para el productor.", "ref": "3 clics · datos públicos · trazable", "s": [2, 6]}, {"cat": "Impacto y sostenibilidad", "q": "¿Cómo se sostiene el proyecto?", "a": "Con dos capas. Productor individual: 100% gratuito, anónimo, sin registro ni paywall sobre datos públicos de NASA. Institucional (cooperativas, aseguradoras, bancos rurales, semilleras): escala por polígono, fase ENSO (ONI)/NMME, calibración privada (GDD, Ky, márgenes $/ha con rindes reales) y API /analyze/batch con X-API-Key.", "ref": "Open Science + B2B", "s": [6]}, {"cat": "Impacto y sostenibilidad", "q": "¿Cuál es el impacto real?", "a": "Convierte 35 años de datos NASA en una decisión en 3 clics. En el caso demo, el calor extremo pasó de 52.7 a 80.5 días por campaña y la lluvia total cayó 195.9 mm; la rotación actual tuvo 1/20 campañas malas, y las tres alternativas 0/20. No inventamos cifras de adopción ni de ahorro.", "ref": "35 años · 159 tests · 3 clics", "s": [1, 6]}, {"cat": "Impacto y sostenibilidad", "q": "¿Qué harían con más tiempo?", "a": "Llevar a producción la capa institucional: escalar a polígono con CHIRPS/IMERG + Sentinel-2, ponderar por fase ENSO/NMME y calibrar con rindes reales de cooperativas.", "ref": "Hoja de ruta = capa B2B", "s": [6]}];
+var QA_AVOID = "Evita decir «predice», «garantiza rendimiento» o «validado con satélite» sin aclarar que es 1 de 1. No inventes cifras de adopción, ahorro o usuarios. No compares con otras herramientas por nombre. Sí di: «compara», «backtest», «trade-off declarado», «límite declarado».";
+// Peores 3 campañas de la rotación actual (resto: fuera de las 3 peores, sin cifra publicada aquí)
+var HIGHLIGHT = {
+  "2016/17": {I:"0.5541", cls:"bad",  txt:"Campaña mala · causa: calor", ic:"🔥"},
+  "2023/24": {I:"0.6796", cls:"warn", txt:"2.ª peor · estrés hídrico", ic:"💧"},
+  "2015/16": {I:"0.6814", cls:"warn", txt:"3.ª peor · estrés hídrico", ic:"💧"}
+};
+// MODIS max_ndvi por campaña. Solo 2016/17 está en el guion verificado.
+// Para dibujar la serie completa pega aquí los 19 valores restantes del CSV del backtest.
+var MODIS_NDVI = { "2016/17": 0.7160 };
+var TERCIL = 0.7260;
+
+var SEASONS = [];
+for (var y = 2005; y < 2025; y++) SEASONS.push(y + "/" + String((y + 1) % 100).padStart(2, "0"));
+
+/* =====================================================================
+   UTILIDADES
+   ===================================================================== */
+var $ = function(s, r){ return (r || document).querySelector(s); };
+var $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var HAS_GSAP = typeof window.gsap !== "undefined";
+var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Shim de timeline cuando GSAP no está disponible: aplica estados finales al instante.
+function applyEnd(targets, vars){
+  var list = typeof targets === "string" ? $$(targets) : (targets && targets.length !== undefined ? Array.prototype.slice.call(targets) : [targets]);
+  list.forEach(function(el){
+    if (!el || !el.style) return;
+    if ("opacity" in vars) el.style.opacity = vars.opacity;
+    if ("width" in vars) el.style.width = vars.width;
+    if ("strokeDashoffset" in vars) el.style.strokeDashoffset = vars.strokeDashoffset;
+    el.style.transform = "";
+  });
+}
+function ShimTL(){ var t = {
+  to:function(a,v){applyEnd(a,v);return t;}, from:function(){return t;},
+  fromTo:function(a,f,v){applyEnd(a,v);return t;}, call:function(fn){fn();return t;},
+  add:function(){return t;}, kill:function(){}, progress:function(){return t;}
+}; return t; }
+function newTL(){ return HAS_GSAP && !reduceMotion ? gsap.timeline() : ShimTL(); }
+
+// Contador numérico propio (RAF) — no depende de GSAP
+function runCounter(el, delay){
+  var end = parseFloat(el.dataset.count), dec = +(el.dataset.dec || 0);
+  var pre = el.dataset.pre || "", suf = el.dataset.suf || "";
+  var fmt = function(v){ return pre + v.toFixed(dec) + suf; };
+  if (el._raf) cancelAnimationFrame(el._raf);
+  if (reduceMotion){ el.textContent = fmt(end); return; }
+  el.textContent = fmt(0);
+  var t0 = null, dur = 1500;
+  var step = function(ts){
+    if (t0 === null) t0 = ts + (delay || 0) * 1000;
+    var k = Math.min(1, Math.max(0, (ts - t0) / dur));
+    var e = 1 - Math.pow(1 - k, 3);
+    el.textContent = fmt(end * e);
+    if (k < 1) el._raf = requestAnimationFrame(step); else { el.textContent = fmt(end); el._raf = null; }
+  };
+  el._raf = requestAnimationFrame(step);
+}
+
+/* =====================================================================
+   CONSTRUCCIÓN DINÁMICA (tira 20 campañas + gráfico MODIS)
+   ===================================================================== */
+(function buildStrip(){
+  var strip = $("#strip"), yl = $("#yl"), tip = $("#tip");
+  SEASONS.forEach(function(s){
+    var h = HIGHLIGHT[s];
+    var c = document.createElement("div");
+    c.className = "cell" + (h ? " " + h.cls : "");
+    c.setAttribute("role", "button"); c.tabIndex = 0;
+    c.setAttribute("aria-label", "Campaña " + s);
+    if (h) c.innerHTML = '<span class="iv">I ' + h.I + '</span>';
+    var show = function(){
+      $$(".cell", strip).forEach(function(x){ x.classList.remove("sel"); });
+      c.classList.add("sel");
+      tip.innerHTML = h
+        ? "<b>" + s + "</b> · I = <b>" + h.I + "</b> · " + h.txt
+        : "<b>" + s + "</b> · No es campaña mala ni está entre las 3 peores.";
+    };
+    c.addEventListener("click", function(e){ e.stopPropagation(); show(); });
+    c.addEventListener("mouseenter", show);
+    c.addEventListener("keydown", function(e){ if (e.key === "Enter") show(); });
+    strip.appendChild(c);
+    var l = document.createElement("span");
+    l.textContent = s.slice(2);
+    if (h) l.className = "hl";
+    yl.appendChild(l);
+  });
+})();
+
+(function buildModis(){
+  var svg = $("#modis"), NS = "http://www.w3.org/2000/svg";
+  var W = 820, H = 440, L = 70, R = 20, T = 20, B = 60;
+  var vals = Object.keys(MODIS_NDVI).map(function(k){ return MODIS_NDVI[k]; }).concat([TERCIL]);
+  var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+  var pad = Math.max(0.04, (hi - lo) * 0.25);
+  lo = Math.floor((lo - pad) * 100) / 100; hi = Math.ceil((hi + pad) * 100) / 100;
+  var x = function(i){ return L + (W - L - R) * (i + 0.5) / SEASONS.length; };
+  var yv = function(v){ return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); };
+  var el = function(tag, a, txt){ var e = document.createElementNS(NS, tag); for (var k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; svg.appendChild(e); return e; };
+
+  var defs = el("defs", {}); defs.innerHTML = '<linearGradient id="bandg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F59E0B" stop-opacity=".22"/><stop offset="1" stop-color="#F59E0B" stop-opacity=".02"/></linearGradient>';
+  el("rect", {"class":"band", x:L, y:yv(TERCIL), width:W - L - R, height:(H - B) - yv(TERCIL)});
+  el("line", {"class":"ax", x1:L, y1:H - B, x2:W - R, y2:H - B});
+  el("line", {"class":"ax", x1:L, y1:T, x2:L, y2:H - B});
+  var ticks = 4;
+  for (var i = 0; i <= ticks; i++){
+    var v = lo + (hi - lo) * i / ticks;
+    el("text", {"class":"axt", x:L - 10, y:yv(v) + 5, "text-anchor":"end"}, v.toFixed(2));
+  }
+  el("text", {"class":"axt", x:L, y:T - 4}, "max_ndvi");
+  var thr = el("line", {"class":"thr", x1:L, y1:yv(TERCIL), x2:W - R, y2:yv(TERCIL)});
+  thr.setAttribute("id", "thr");
+  el("text", {"class":"axt", x:W - R, y:yv(TERCIL) - 10, "text-anchor":"end", style:"fill:#F59E0B;font-weight:700"}, "tercil inferior ≤ " + TERCIL.toFixed(4));
+
+  SEASONS.forEach(function(s, i){
+    el("text", {"class":"axt", x:x(i), y:H - B + 24, "text-anchor":"middle", style:HIGHLIGHT[s] && HIGHLIGHT[s].cls === "bad" ? "fill:#F1F5F9;font-weight:700" : ""}, s.slice(2));
+    if (MODIS_NDVI[s] == null){
+      el("circle", {cx:x(i), cy:H - B, r:4, fill:"none", stroke:"rgba(148,163,184,.4)", "stroke-width":1.5, "class":"mpt"});
+    }
+  });
+  Object.keys(MODIS_NDVI).forEach(function(s){
+    var i = SEASONS.indexOf(s); if (i < 0) return;
+    var bad = HIGHLIGHT[s] && HIGHLIGHT[s].cls === "bad";
+    var cx = x(i), cy = yv(MODIS_NDVI[s]);
+    if (bad){
+      el("circle", {cx:cx, cy:cy, r:22, fill:"rgba(239,68,68,.18)", "class":"mpt pulse"});
+      el("line", {x1:cx, y1:cy + 10, x2:cx, y2:H - B, stroke:"rgba(239,68,68,.5)", "stroke-dasharray":"4 5", "class":"mpt"});
+      el("text", {x:cx + 28, y:cy + 6, style:"fill:#F1F5F9;font:700 18px " + getComputedStyle(document.body).getPropertyValue("--mono"), "class":"mpt"}, "2016/17 · " + MODIS_NDVI[s].toFixed(4));
+    }
+    el("circle", {cx:cx, cy:cy, r:bad ? 10 : 7, fill:bad ? "#EF4444" : "#38BDF8", stroke:"#071018", "stroke-width":3, "class":"mpt"});
+  });
+  el("text", {"class":"axt", x:W - R, y:H - 10, "text-anchor":"end"}, Object.keys(MODIS_NDVI).length < SEASONS.length ? "○ campañas sin valor cargado en esta diapositiva" : "");
+})();
+
+/* =====================================================================
+   ESCENAS (motor de timeline modular tipo keyframes)
+   ===================================================================== */
+var slides = $$(".slide");
+var N = slides.length;
+(function splitHeadings(){
+  var mk = function(w){ var a = document.createElement("span"); a.className = "w"; var b = document.createElement("span"); b.className = "wi"; b.textContent = w; a.appendChild(b); return a; };
+  $$("h2").forEach(function(h){
+    h.removeAttribute("data-a");
+    Array.prototype.slice.call(h.childNodes).forEach(function(n){
+      var words = (n.textContent || "").split(/\s+/).filter(Boolean);
+      if (n.nodeType === 3){
+        var f = document.createDocumentFragment();
+        words.forEach(function(w, ix){ f.appendChild(mk(w)); f.appendChild(document.createTextNode(" ")); });
+        h.replaceChild(f, n);
+      } else if (n.nodeType === 1){
+        n.textContent = "";
+        words.forEach(function(w){ n.appendChild(mk(w)); });
+        h.insertBefore(document.createTextNode(" "), n.nextSibling);
+      }
+    });
+  });
+})();
+slides.forEach(function(s, i){
+  var f = document.createElement("div"); f.className = "frame"; f.setAttribute("aria-hidden","true"); f.innerHTML = "<i></i><i></i><i></i><i></i><b></b>"; s.insertBefore(f, s.firstChild);
+  if (i > 0 && i < N - 1){ var bn = document.createElement("div"); bn.className = "bignum"; bn.setAttribute("aria-hidden","true"); bn.textContent = String(i + 1).padStart(2, "0"); bn.dataset.t = s.dataset.title; s.insertBefore(bn, s.firstChild); }
+});
+var current = -1, activeTL = null, cleanups = [], autoOn = false, autoT = null;
+
+function genericIn(tl, slide){
+  var ws = $$(".wi", slide);
+  if (ws.length) tl.fromTo(ws, {yPercent:115, opacity:0}, {yPercent:0, opacity:1, duration:.95, stagger:.06, ease:"power4.out"}, .12);
+  var items = $$("[data-a]", slide);
+  if (items.length) tl.fromTo(items, {opacity:0, y:36}, {opacity:1, y:0, duration:.8, stagger:.09, ease:"power3.out"}, 0);
+}
+function countersIn(slide, base){
+  $$("[data-count]", slide).forEach(function(el, i){ runCounter(el, (base || .4) + i * .12); });
+}
+
+var SCENES = [
+  function(tl, s){ genericIn(tl, s); },
+  function(tl, s){ genericIn(tl, s); countersIn(s, .5); },
+  function(tl, s){
+    genericIn(tl, s);
+    tl.fromTo($$("[data-node]", s), {opacity:0, y:50, scale:.92}, {opacity:1, y:0, scale:1, duration:.7, stagger:.16, ease:"back.out(1.6)"}, .3);
+    startCycle(function(k){ $$("[data-node]", s).forEach(function(n, ix){ n.classList.toggle("lit", ix === k); }); }, 5, 1000, 1900);
+  },
+  function(tl, s){
+    genericIn(tl, s);
+    tl.fromTo($$(".cell", s), {opacity:0, y:30}, {opacity:1, y:0, duration:.5, stagger:{each:.04, from:"center"}, ease:"power2.out"}, .3);
+    $$(".fill", s).forEach(function(f){
+      tl.fromTo(f, {width:"0%"}, {width:getComputedStyle(f).getPropertyValue("--w").trim(), duration:1.2, ease:"power3.out"}, 1.1);
+    });
+    tl.call(function(){ var bad = $$(".cell.bad", s)[0]; if (bad) bad.dispatchEvent(new Event("mouseenter")); }, null, 1.6);
+  },
+  function(tl, s){
+    genericIn(tl, s);
+    tl.fromTo($$("[data-card]", s), {opacity:0, y:60, rotationX:-12}, {opacity:1, y:0, rotationX:0, duration:.8, stagger:.15, ease:"power3.out"}, .25);
+    $$(".fill", s).forEach(function(f, i){
+      tl.fromTo(f, {width:"0%"}, {width:getComputedStyle(f).getPropertyValue("--w").trim(), duration:1.1, ease:"power3.out"}, .7 + i * .15);
+    });
+    countersIn(s, .7);
+  },
+  function(tl, s){
+    genericIn(tl, s);
+    tl.fromTo($$("#modis .mpt", s), {opacity:0}, {opacity:1, duration:.5, stagger:.03}, .8);
+  },
+  function(tl, s){ genericIn(tl, s); countersIn(s, .7); }
+];
+
+function go(i){
+  i = Math.max(0, Math.min(N - 1, i));
+  if (i === current) return;
+  var first = current < 0, dir = (first || i > current) ? 1 : -1;
+  cleanups.forEach(function(f){ try { f(); } catch (e) {} }); cleanups = [];
+  if (activeTL) activeTL.kill();
+  document.documentElement.style.setProperty("--in", dir);
+  var prev = first ? null : slides[current];
+  if (prev){
+    prev.classList.remove("active"); prev.classList.add("leave");
+    setTimeout(function(){ prev.classList.remove("leave"); }, 950);
+  }
+  current = i;
+  var s = slides[i];
+  s.style.transition = "none"; s.classList.remove("leave"); void s.offsetWidth; s.style.transition = "";
+  s.classList.add("active");
+  if (!first){
+    var wp = $("#wipe"); wp.className = ""; void wp.offsetWidth; wp.className = "go" + (dir < 0 ? " b" : "");
+  }
+  activeTL = newTL();
+  try { SCENES[i](activeTL, s); } catch (e) { /* nunca romper la presentación */ }
+  updateHUD();
+  if (window.__setScene) window.__setScene(i, dir);
+  try { if (location.hash !== "#" + (i + 1)) history.replaceState(null, "", "#" + (i + 1)); } catch (e) { /* iframe aislado: sin hash */ }
+  if (autoOn) scheduleAuto();
+}
+function scheduleAuto(){
+  clearTimeout(autoT);
+  if (!autoOn || current >= N - 1) return;
+  autoT = setTimeout(function(){ go(current + 1); }, (SCHEDULE[current + 1] - SCHEDULE[current]) * 1000);
+}
+function startCycle(fn, n, every, delay){
+  var k = 0, iv, to = setTimeout(function(){ fn(0); iv = setInterval(function(){ k = (k + 1) % (n + 1); fn(k < n ? k : -1); }, every); }, delay || 0);
+  cleanups.push(function(){ clearTimeout(to); clearInterval(iv); fn(-1); });
+}
+
+/* =====================================================================
+   HUD invisible en reposo · navegación · vista general
+   ===================================================================== */
+var prog = $("#progress");
+SCHEDULE.slice(0, -1).forEach(function(t, i){
+  var seg = document.createElement("div");
+  seg.className = "seg";
+  seg.style.left = (t / TOTAL * 100) + "%";
+  seg.style.width = ((SCHEDULE[i + 1] - t) / TOTAL * 100) + "%";
+  seg.title = String(i + 1).padStart(2, "0") + " · " + slides[i].dataset.title;
+  seg.addEventListener("click", function(e){ e.stopPropagation(); go(i); });
+  prog.appendChild(seg);
+});
+var fmtT = function(sec){ sec = Math.round(sec); return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0"); };
+var pad2 = function(n){ return String(n).padStart(2, "0"); };
+function updateHUD(){
+  $("#count").textContent = pad2(current + 1) + " / " + pad2(N);
+  $$(".seg", prog).forEach(function(seg, i){ seg.className = "seg" + (i < current ? " done" : i === current ? " cur" : ""); });
+  $("#nTitle").textContent = pad2(current + 1) + " · " + slides[current].dataset.title;
+  $("#nWin").textContent = fmtT(SCHEDULE[current]) + "–" + fmtT(SCHEDULE[current + 1]);
+  var qs = QA.filter(function(x){ return x.s.indexOf(current) >= 0; }).slice(0, 3).map(function(x){ return "• " + x.q; });
+  $("#nBody").textContent = NOTES[current] + (qs.length ? "\n\nSi preguntan:\n" + qs.join("\n") : "");
+}
+var toastT;
+function toast(msg){
+  var t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove("show"); }, 1500);
+}
+
+/* idle: el HUD y el cursor se esconden solos */
+var idleT;
+function wake(){ document.body.classList.remove("idle"); clearTimeout(idleT); idleT = setTimeout(function(){ document.body.classList.add("idle"); }, 2200); }
+document.body.classList.add("idle");
+["pointermove", "pointerdown", "touchstart"].forEach(function(ev){ document.addEventListener(ev, wake, {passive:true}); });
+
+/* vista general */
+var ov = $("#overview"), hc = $("#helpcard"), qa = $("#qa");
+slides.forEach(function(s, i){
+  var d = document.createElement("div"); d.className = "ov";
+  d.innerHTML = '<div class="n">' + pad2(i + 1) + '</div><div class="t">' + s.dataset.title + '</div>';
+  d.addEventListener("click", function(e){ e.stopPropagation(); closeOverlays(); go(i); });
+  ov.appendChild(d);
+});
+function openOv(){ $$(".ov", ov).forEach(function(d, i){ d.classList.toggle("cur", i === current); }); hc.classList.remove("show"); qa.classList.remove("show"); ov.classList.add("show"); }
+function closeOverlays(){ ov.classList.remove("show"); hc.classList.remove("show"); qa.classList.remove("show"); }
+function overlayOpen(){ return ov.classList.contains("show") || hc.classList.contains("show") || qa.classList.contains("show"); }
+function toggleQA(){ if (qa.classList.contains("show")) closeOverlays(); else { closeOverlays(); qa.classList.add("show"); qa.scrollTop = 0; } }
+function toggleOv(){ ov.classList.contains("show") ? closeOverlays() : openOv(); }
+function toggleHelp(){ if (hc.classList.contains("show")) closeOverlays(); else { closeOverlays(); hc.classList.add("show"); } }
+function toggleFS(){
+  try {
+    if (!document.fullscreenElement){ var p = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (p && p.catch) p.catch(function(){}); }
+    else if (document.exitFullscreen) document.exitFullscreen();
+  } catch (e) {}
+}
+function toggleAuto(){
+  autoOn = !autoOn; clearTimeout(autoT);
+  if (autoOn) scheduleAuto();
+  toast(autoOn ? "Avance automático · activado" : "Avance automático · desactivado");
+}
+
+/* teclado */
+document.addEventListener("keydown", function(e){
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  var k = e.key;
+  if (k === "Escape"){ if (overlayOpen()) closeOverlays(); return; }
+  if (k === "g" || k === "G" || k === "o" || k === "O"){ toggleOv(); return; }
+  if (k === "q" || k === "Q"){ toggleQA(); return; }
+  if (k === "?" || k === "h" || k === "H" || k === "/"){ toggleHelp(); return; }
+  if (overlayOpen()) return;
+  if (k === "ArrowRight" || k === "ArrowDown" || k === "PageDown" || k === "Enter" || (k === " " && !e.shiftKey)){ e.preventDefault(); go(current + 1); }
+  else if (k === "ArrowLeft" || k === "ArrowUp" || k === "PageUp" || k === "Backspace" || (k === " " && e.shiftKey)){ e.preventDefault(); go(current - 1); }
+  else if (k === "Home") go(0);
+  else if (k === "End") go(N - 1);
+  else if (/^[1-9]$/.test(k)) go(+k - 1);
+  else if (k === "t" || k === "T") $("#notes").classList.toggle("show");
+  else if (k === "a" || k === "A") toggleAuto();
+  else if (k === "f" || k === "F") toggleFS();
+});
+
+/* botones */
+$("#prev").addEventListener("click", function(e){ e.stopPropagation(); go(current - 1); });
+$("#next").addEventListener("click", function(e){ e.stopPropagation(); go(current + 1); });
+$("#fs").addEventListener("click", function(e){ e.stopPropagation(); toggleFS(); });
+$("#ovb").addEventListener("click", function(e){ e.stopPropagation(); toggleOv(); });
+$$(".overlay").forEach(function(o){ o.addEventListener("click", function(e){ if (e.target === o) closeOverlays(); }); });
+
+/* puntero: clic (izq 25% = atrás), rueda, swipe */
+document.addEventListener("click", function(e){
+  if (overlayOpen() || e.target.closest(".hud,.overlay,.cell,a,button")) return;
+  if (e.clientX < window.innerWidth * 0.25) go(current - 1); else go(current + 1);
+});
+var wheelLock = 0;
+document.addEventListener("wheel", function(e){
+  if (overlayOpen()) return;
+  var now = Date.now();
+  if (now - wheelLock < 800 || Math.abs(e.deltaY) < 24) return;
+  wheelLock = now; go(current + (e.deltaY > 0 ? 1 : -1));
+}, {passive:true});
+var tx0 = null;
+document.addEventListener("touchstart", function(e){ tx0 = e.touches[0].clientX; }, {passive:true});
+document.addEventListener("touchend", function(e){
+  if (tx0 === null) return; var dx = e.changedTouches[0].clientX - tx0; tx0 = null;
+  if (Math.abs(dx) > 50) go(current + (dx < 0 ? 1 : -1));
+}, {passive:true});
+
+/* foco de luz en paneles + inclinación 3D en tarjetas */
+document.addEventListener("pointermove", function(e){
+  var p = e.target.closest && e.target.closest(".panel");
+  if (!p) return;
+  var r = p.getBoundingClientRect();
+  p.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100) + "%");
+  p.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100) + "%");
+});
+if (HAS_GSAP && !reduceMotion){
+  $$(".card").forEach(function(c){
+    c.addEventListener("pointermove", function(e){
+      var r = c.getBoundingClientRect(), px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5;
+      gsap.to(c, {rotationY:px * 10, rotationX:-py * 8, y:-8, transformPerspective:1000, duration:.4, ease:"power2.out", overwrite:"auto"});
+    });
+    c.addEventListener("pointerleave", function(){ gsap.to(c, {rotationY:0, rotationX:0, y:0, duration:.6, ease:"power3.out", overwrite:"auto"}); });
+  });
+}
+
+(function buildQA(){
+  var wrap = $("#qalist"), cats = [];
+  QA.forEach(function(x){ if (cats.indexOf(x.cat) < 0) cats.push(x.cat); });
+  var card = function(cls, q, a, r){
+    var d = document.createElement("div"); d.className = "qc" + (cls ? " " + cls : "");
+    var e1 = document.createElement("div"); e1.className = "q"; e1.textContent = q;
+    var e2 = document.createElement("div"); e2.className = "a"; e2.textContent = a;
+    d.appendChild(e1); d.appendChild(e2);
+    if (r){ var e3 = document.createElement("div"); e3.className = "r"; e3.textContent = "Ancla: " + r; d.appendChild(e3); }
+    wrap.appendChild(d);
+  };
+  cats.forEach(function(c){
+    var h6 = document.createElement("h6"); h6.textContent = c; wrap.appendChild(h6);
+    QA.filter(function(x){ return x.cat === c; }).forEach(function(x){ card("", x.q, x.a, x.ref); });
+  });
+  var h6 = document.createElement("h6"); h6.textContent = "Cuidado"; wrap.appendChild(h6);
+  card("warn", "Qué NO decir", QA_AVOID, "");
+})();
+
+function fit(){
+  var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  $("#stage").style.transform = "translate(-50%,-50%) scale(" + s + ")";
+}
+window.addEventListener("resize", fit);
+fit();
+
+/* =====================================================================
+   THREE.JS — globo orbital con foco en Santa Cruz
+   ===================================================================== */
+function webglOK(){
+  try { var c = document.createElement("canvas"); return !!(window.WebGLRenderingContext && (c.getContext("webgl") || c.getContext("experimental-webgl"))); }
+  catch (e) { return false; }
+}
+(function initThree(){
+  if (typeof window.THREE === "undefined" || !webglOK()) { document.body.classList.add("no-webgl"); return; }
+  var THREE = window.THREE, renderer;
+  try { renderer = new THREE.WebGLRenderer({canvas:$("#bg"), antialias:true, alpha:true, powerPreference:"high-performance"}); }
+  catch (e) { document.body.classList.add("no-webgl"); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x071018, 1);
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x071018, 0.06);
+  var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+  camera.position.set(0, 0, 5);
+
+  var root = new THREE.Group(); scene.add(root);      // posición/escala por diapositiva
+  var spin = new THREE.Group(); root.add(spin);       // oscilación idle
+  var globe = new THREE.Group(); spin.add(globe);     // orientación base (Santa Cruz al frente)
+
+  function ll(lat, lon, r){
+    var phi = (90 - lat) * Math.PI / 180, th = (lon + 180) * Math.PI / 180;
+    return new THREE.Vector3(-r * Math.sin(phi) * Math.cos(th), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(th));
+  }
+  // Orientar: Santa Cruz mirando a cámara
+  var sc = ll(-17.30, -62.25, 1);
+  globe.rotation.order = "XYZ";
+  var yaw = Math.atan2(-sc.x, sc.z);
+  var zr = -sc.x * Math.sin(yaw) + sc.z * Math.cos(yaw);
+  globe.rotation.y = yaw;
+  globe.rotation.x = Math.atan2(sc.y, zr) * 0.75;
+
+  // Esfera de puntos (Fibonacci)
+  var NP = 7000, pos = new Float32Array(NP * 3), col = new Float32Array(NP * 3);
+  var cA = new THREE.Color(0x38BDF8), cB = new THREE.Color(0x10B981), tmp = new THREE.Color();
+  for (var i = 0; i < NP; i++){
+    var yy = 1 - (i / (NP - 1)) * 2, rr = Math.sqrt(1 - yy * yy), th = i * Math.PI * (3 - Math.sqrt(5));
+    pos[i*3] = Math.cos(th) * rr; pos[i*3+1] = yy; pos[i*3+2] = Math.sin(th) * rr;
+    var d = new THREE.Vector3(pos[i*3], pos[i*3+1], pos[i*3+2]).distanceTo(sc);
+    tmp.copy(cA).lerp(cB, Math.max(0, 1 - d / 0.55));
+    col[i*3] = tmp.r; col[i*3+1] = tmp.g; col[i*3+2] = tmp.b;
+  }
+  var gGeo = new THREE.BufferGeometry();
+  gGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  gGeo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  var gMat = new THREE.PointsMaterial({size:0.014, vertexColors:true, transparent:true, opacity:.75, depthWrite:false});
+  globe.add(new THREE.Points(gGeo, gMat));
+
+  // Núcleo oscuro + retícula
+  globe.add(new THREE.Mesh(new THREE.SphereGeometry(0.985, 48, 48), new THREE.MeshBasicMaterial({color:0x06121b, transparent:true, opacity:.92})));
+  var wMat = new THREE.MeshBasicMaterial({color:0x38BDF8, wireframe:true, transparent:true, opacity:.06});
+  globe.add(new THREE.Mesh(new THREE.SphereGeometry(1.002, 36, 18), wMat));
+
+  // Halo atmosférico
+  var halo = new THREE.Mesh(new THREE.SphereGeometry(1.12, 48, 48), new THREE.ShaderMaterial({
+    transparent:true, side:THREE.BackSide, depthWrite:false, blending:THREE.AdditiveBlending,
+    uniforms:{c:{value:new THREE.Color(0x38BDF8)}, o:{value:1}},
+    vertexShader:"varying vec3 vN;void main(){vN=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
+    fragmentShader:"uniform vec3 c;uniform float o;varying vec3 vN;void main(){float i=pow(0.72-dot(vN,vec3(0.,0.,1.)),3.);gl_FragColor=vec4(c,1.)*i*o;}"
+  }));
+  spin.add(halo);
+
+  // Marcador Santa Cruz
+  var mk = new THREE.Group(); globe.add(mk);
+  var dir = sc.clone().normalize();
+  var q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
+  var dot = new THREE.Mesh(new THREE.SphereGeometry(0.022, 16, 16), new THREE.MeshBasicMaterial({color:0x10B981}));
+  dot.position.copy(dir.clone().multiplyScalar(1.01)); mk.add(dot);
+  var rings = [];
+  for (var r = 0; r < 3; r++){
+    var ring = new THREE.Mesh(new THREE.RingGeometry(0.03, 0.038, 48), new THREE.MeshBasicMaterial({color:0x10B981, transparent:true, side:THREE.DoubleSide, depthWrite:false}));
+    ring.position.copy(dir.clone().multiplyScalar(1.012)); ring.quaternion.copy(q); ring.userData.ph = r / 3;
+    mk.add(ring); rings.push(ring);
+  }
+  var beamGeo = new THREE.CylinderGeometry(0.004, 0.004, 0.42, 8); beamGeo.translate(0, 0.21, 0);
+  var beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({color:0x10B981, transparent:true, opacity:.8}));
+  beam.position.copy(dir.clone().multiplyScalar(1.01));
+  beam.quaternion.copy(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir));
+  mk.add(beam);
+
+  // Órbita + satélite (azul NASA)
+  var orbit = new THREE.Group(); spin.add(orbit);
+  orbit.rotation.set(1.15, 0.2, -0.45);
+  var oPts = []; for (var a = 0; a <= 128; a++){ var t = a / 128 * Math.PI * 2; oPts.push(new THREE.Vector3(Math.cos(t) * 1.55, 0, Math.sin(t) * 1.55)); }
+  var oMat = new THREE.LineBasicMaterial({color:0x38BDF8, transparent:true, opacity:.28});
+  orbit.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(oPts), oMat));
+  var sat = new THREE.Mesh(new THREE.SphereGeometry(0.026, 12, 12), new THREE.MeshBasicMaterial({color:0xE0F2FE}));
+  orbit.add(sat);
+
+  // Partículas atmosféricas
+  var NA = 1600, ap = new Float32Array(NA * 3);
+  for (var j = 0; j < NA; j++){
+    var rad = 2 + Math.random() * 7, u = Math.random() * 2 - 1, ph = Math.random() * Math.PI * 2, s2 = Math.sqrt(1 - u * u);
+    ap[j*3] = rad * s2 * Math.cos(ph); ap[j*3+1] = rad * u; ap[j*3+2] = rad * s2 * Math.sin(ph) - 2;
+  }
+  var aGeo = new THREE.BufferGeometry(); aGeo.setAttribute("position", new THREE.BufferAttribute(ap, 3));
+  var aMat = new THREE.PointsMaterial({color:0x7dd3fc, size:0.022, transparent:true, opacity:.55, depthWrite:false, blending:THREE.AdditiveBlending});
+  var dust = new THREE.Points(aGeo, aMat); scene.add(dust);
+
+  // Terreno agrícola wireframe (horizonte de parcelas)
+  var tGeo = new THREE.PlaneGeometry(26, 12, 90, 40);
+  var tBase = tGeo.attributes.position.array.slice();
+  var tMat = new THREE.MeshBasicMaterial({color:0x10B981, wireframe:true, transparent:true, opacity:.12, depthWrite:false});
+  var terrain = new THREE.Mesh(tGeo, tMat);
+  terrain.rotation.x = -Math.PI / 2.15; terrain.position.set(0, -2.6, -4.5);
+  scene.add(terrain);
+
+  // Arcos de datos desde Santa Cruz (flujo NASA → lote)
+  var arcs = [];
+  [[18, -40], [-35, -10], [5, -100], [-50, -75], [30, -85]].forEach(function(dst, ai){
+    var a0 = dir.clone(), a1 = ll(dst[0], dst[1], 1).normalize();
+    var mid = a0.clone().add(a1).normalize().multiplyScalar(1.0 + a0.distanceTo(a1) * 0.55);
+    var curve = new THREE.QuadraticBezierCurve3(a0.clone().multiplyScalar(1.01), mid, a1.clone().multiplyScalar(1.01));
+    var g = new THREE.BufferGeometry().setFromPoints(curve.getPoints(80));
+    var m = new THREE.LineBasicMaterial({color: ai % 2 ? 0x38BDF8 : 0x10B981, transparent:true, opacity:.75, blending:THREE.AdditiveBlending, depthWrite:false});
+    var line = new THREE.Line(g, m); line.userData = {ph: ai * 0.21, m: m};
+    globe.add(line); arcs.push(line);
+  });
+
+  // Estados de cámara/globo por diapositiva (x, y, z, escala, opacidad, rotY extra)
+  var STATES = [
+    [2.35, -0.05, 0.0, 1.10, 1.00, 0.00],
+    [3.60, -0.30, -1.6, 1.05, 0.35, 0.35],
+    [0.00, -2.55, -1.2, 1.85, 0.40, -0.25],
+    [2.70, 0.40, -1.4, 0.95, 0.40, 0.55],
+    [0.00, -2.90, -2.0, 2.30, 0.28, 0.80],
+    [0.00, -2.60, -1.6, 1.90, 0.28, -0.50],
+    [0.00, -0.10, -3.2, 1.20, 0.30, 0.00]
+  ];
+  var cur = STATES[0].slice(), tgt = STATES[0].slice();
+  var warp = 0, wdir = 1;
+  window.__setScene = function(i, d){ tgt = STATES[i] || STATES[0]; warp = 1; wdir = d || 1; };
+
+  var mx = 0, my = 0;
+  window.addEventListener("pointermove", function(e){ mx = e.clientX / window.innerWidth - .5; my = e.clientY / window.innerHeight - .5; });
+
+  function resize(){
+    var w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  window.addEventListener("resize", resize); resize();
+
+  var clock = new THREE.Clock();
+  (function loop(){
+    var dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+    var k = 1 - Math.pow(0.0025, dt);
+    for (var n = 0; n < 6; n++) cur[n] += (tgt[n] - cur[n]) * k;
+    root.position.set(cur[0], cur[1], cur[2]);
+    root.scale.setScalar(cur[3]);
+    spin.rotation.y = cur[5] + Math.sin(t * 0.12) * 0.12 + mx * 0.15;
+    spin.rotation.x = my * 0.08;
+    gMat.opacity = .75 * cur[4]; wMat.opacity = .06 * cur[4];
+    halo.material.uniforms.o.value = cur[4];
+    oMat.opacity = .28 * cur[4];
+    beam.material.opacity = .8 * cur[4];
+    rings.forEach(function(rg){
+      var p = (t * 0.6 + rg.userData.ph) % 1;
+      rg.scale.setScalar(1 + p * 3.2); rg.material.opacity = (1 - p) * .9 * cur[4];
+    });
+    var sa = t * 0.35; sat.position.set(Math.cos(sa) * 1.55, 0, Math.sin(sa) * 1.55);
+    dust.rotation.y = t * 0.01; dust.rotation.x = Math.sin(t * 0.05) * 0.05;
+    var tp = tGeo.attributes.position.array;
+    for (var v = 0; v < tp.length; v += 3){ var bx = tBase[v], by = tBase[v+1]; tp[v+2] = Math.sin(bx * 0.55 + t * 0.35) * 0.22 + Math.cos(by * 0.8 - t * 0.25) * 0.18; }
+    tGeo.attributes.position.needsUpdate = true;
+    tMat.opacity = 0.07 + (1 - cur[4]) * 0.12;
+    arcs.forEach(function(ln){
+      var p = (t * 0.28 + ln.userData.ph) % 1;
+      var s = Math.max(0, Math.floor((p - 0.35) * 81)), e = Math.min(81, Math.floor(p * 81 * 1.2));
+      ln.geometry.setDrawRange(s, Math.max(0, e - s)); ln.userData.m.opacity = .8 * cur[4];
+    });
+    warp *= Math.pow(0.04, dt);
+    camera.fov = 42 + warp * 16; camera.updateProjectionMatrix();
+    dust.rotation.z += warp * 0.04 * wdir;
+    camera.position.x = mx * 0.25; camera.position.y = -my * 0.18; camera.lookAt(0, 0, 0); camera.rotateZ(warp * 0.05 * wdir);
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* =====================================================================
+   ARRANQUE
+   ===================================================================== */
+var start = NaN; try { start = parseInt((location.hash || "").replace("#", ""), 10); } catch (e) {}
+go(isNaN(start) ? 0 : start - 1);
+
+})();
+</script>
+</body>
+</html>
