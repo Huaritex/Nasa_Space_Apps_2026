@@ -43,7 +43,7 @@ export const App: React.FC = () => {
   const [lon, setLon] = useState<number>(SANTA_CRUZ_DEFAULT.lon);
   const [soilTexture, setSoilTexture] = useState<SoilTexture>(SANTA_CRUZ_DEFAULT.soil);
   const [currentRotation, setCurrentRotation] = useState<Rotation>(SANTA_CRUZ_DEFAULT.rotation);
-  const [includeDiversified, setIncludeDiversified] = useState<boolean>(false);
+  const [includeDiversified, setIncludeDiversified] = useState<boolean>(true);
 
   const [analyzeData, setAnalyzeData] = useState<AnalyzeResponse | null>(null);
   const [isOffline, setIsOffline] = useState<boolean>(false);
@@ -72,7 +72,7 @@ export const App: React.FC = () => {
             lon: SANTA_CRUZ_DEFAULT.lon,
             soil_texture: SANTA_CRUZ_DEFAULT.soil,
             current_rotation: SANTA_CRUZ_DEFAULT.rotation,
-            include_diversified: false,
+            include_diversified: true,
           });
           if (!isMounted) return;
           setAnalyzeData(result.data);
@@ -112,6 +112,7 @@ export const App: React.FC = () => {
     setLon(SANTA_CRUZ_DEFAULT.lon);
     setSoilTexture(SANTA_CRUZ_DEFAULT.soil);
     setCurrentRotation(SANTA_CRUZ_DEFAULT.rotation);
+    setIncludeDiversified(true);
     setValidationError(null);
     try {
       setLoading(true);
@@ -270,7 +271,11 @@ export const App: React.FC = () => {
         )}
 
         {activeTab === "compare" && analyzeData && (
-          <Compare rotations={analyzeData.rotations} meta={analyzeData.meta} />
+          <Compare
+            rotations={analyzeData.rotations}
+            meta={analyzeData.meta}
+            modisBacktest={analyzeData.modis_backtest}
+          />
         )}
 
         {activeTab === "calendar" && analyzeData && (

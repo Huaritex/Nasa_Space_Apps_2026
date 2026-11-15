@@ -1,14 +1,20 @@
 import React from "react";
-import type { Meta, RotationResult } from "../types";
+import type { Meta, ModisBacktestOut, RotationResult } from "../types";
 import { CompareTable } from "../components/CompareTable";
 import { RotationCard } from "../components/RotationCard";
+import { ModisBacktestCard } from "../components/ModisBacktestCard";
 
 interface CompareProps {
   rotations: RotationResult[];
   meta: Meta;
+  modisBacktest?: ModisBacktestOut | null;
 }
 
-export const Compare: React.FC<CompareProps> = ({ rotations, meta }) => {
+export const Compare: React.FC<CompareProps> = ({
+  rotations,
+  meta,
+  modisBacktest,
+}) => {
   const evalPeriod = meta.periods.eval ?? [2005, 2024];
 
   return (
@@ -41,6 +47,12 @@ export const Compare: React.FC<CompareProps> = ({ rotations, meta }) => {
           ))}
         </div>
       </section>
+
+      {modisBacktest && (
+        <section className="modis-backtest-section">
+          <ModisBacktestCard backtest={modisBacktest} />
+        </section>
+      )}
     </div>
   );
 };

@@ -36,6 +36,7 @@ from app.engine.rotation import (
 from app.engine.slot import calc_runoff
 from app.engine.soil import calc_soil_score
 from app.engine.table import SlotTable
+from app.nasa.modis import compute_modis_backtest, fetch_modis_ndvi
 from app.nasa.power import fetch_power
 from app.schemas import (
     AnalyzeRequest,
@@ -216,12 +217,27 @@ def analyze(request: AnalyzeRequest, power_client=None) -> AnalyzeResponse:
         assumptions=ASSUMPTIONS,
     )
 
+    # 11b. Backtest satelital MODIS exclusivamente offline (PLAN §3 F7 E1)
+    modis_df = fetch_modis_ndvi(
+        lat=request.lat,
+        lon=request.lon,
+        seasons=eval_seasons,
+        offline_only=True,
+    )
+    modis_backtest = compute_modis_backtest(
+        modis_df=modis_df,
+        baseline_seasons_out=current_seasons_out,
+        eval_seasons=eval_seasons,
+        hemisphere=hemisphere,
+    )
+
     # 12. Ensamble de respuesta y actualización de caché
     response = AnalyzeResponse(
         meta=meta,
         climate=climate_metrics,
         climatology={"before": clim_before, "recent": clim_recent},
         rotations=rotations_results,
+        modis_backtest=modis_backtest,
     )
     _ANALYZE_CACHE[cache_key] = response
     return response

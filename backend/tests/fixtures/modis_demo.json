@@ -1,0 +1,830 @@
+{
+  "lat": -17.3,
+  "lon": -62.25,
+  "band": "250m_16_days_NDVI",
+  "dataset": "NASA MODIS (MOD13Q1 v061 \u2014 ORNL DAAC 250m 16-day NDVI)",
+  "seasons_fetched": [
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "subset": [
+    {
+      "modis_date": "A2006017",
+      "calendar_date": "2006-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2020255005134",
+      "data": [
+        6161
+      ]
+    },
+    {
+      "modis_date": "A2006033",
+      "calendar_date": "2006-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2020256020519",
+      "data": [
+        7481
+      ]
+    },
+    {
+      "modis_date": "A2006049",
+      "calendar_date": "2006-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2020256180231",
+      "data": [
+        7329
+      ]
+    },
+    {
+      "modis_date": "A2006065",
+      "calendar_date": "2006-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2020257145844",
+      "data": [
+        6567
+      ]
+    },
+    {
+      "modis_date": "A2007017",
+      "calendar_date": "2007-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021055141428",
+      "data": [
+        4665
+      ]
+    },
+    {
+      "modis_date": "A2007033",
+      "calendar_date": "2007-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021053010434",
+      "data": [
+        4617
+      ]
+    },
+    {
+      "modis_date": "A2007049",
+      "calendar_date": "2007-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021055154138",
+      "data": [
+        6630
+      ]
+    },
+    {
+      "modis_date": "A2007065",
+      "calendar_date": "2007-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021057181235",
+      "data": [
+        6007
+      ]
+    },
+    {
+      "modis_date": "A2008017",
+      "calendar_date": "2008-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021088164506",
+      "data": [
+        3350
+      ]
+    },
+    {
+      "modis_date": "A2008033",
+      "calendar_date": "2008-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021088193406",
+      "data": [
+        6938
+      ]
+    },
+    {
+      "modis_date": "A2008049",
+      "calendar_date": "2008-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021088220025",
+      "data": [
+        5907
+      ]
+    },
+    {
+      "modis_date": "A2008065",
+      "calendar_date": "2008-03-05",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021089001149",
+      "data": [
+        7230
+      ]
+    },
+    {
+      "modis_date": "A2009017",
+      "calendar_date": "2009-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021121211618",
+      "data": [
+        6459
+      ]
+    },
+    {
+      "modis_date": "A2009033",
+      "calendar_date": "2009-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021121041248",
+      "data": [
+        5031
+      ]
+    },
+    {
+      "modis_date": "A2009049",
+      "calendar_date": "2009-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021122040343",
+      "data": [
+        7319
+      ]
+    },
+    {
+      "modis_date": "A2009065",
+      "calendar_date": "2009-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021123084000",
+      "data": [
+        6659
+      ]
+    },
+    {
+      "modis_date": "A2010017",
+      "calendar_date": "2010-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021152161246",
+      "data": [
+        6844
+      ]
+    },
+    {
+      "modis_date": "A2010033",
+      "calendar_date": "2010-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021152194731",
+      "data": [
+        5693
+      ]
+    },
+    {
+      "modis_date": "A2010049",
+      "calendar_date": "2010-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021153205428",
+      "data": [
+        7367
+      ]
+    },
+    {
+      "modis_date": "A2010065",
+      "calendar_date": "2010-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021155020454",
+      "data": [
+        7914
+      ]
+    },
+    {
+      "modis_date": "A2011017",
+      "calendar_date": "2011-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021181113659",
+      "data": [
+        5104
+      ]
+    },
+    {
+      "modis_date": "A2011033",
+      "calendar_date": "2011-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021182082534",
+      "data": [
+        7140
+      ]
+    },
+    {
+      "modis_date": "A2011049",
+      "calendar_date": "2011-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021187065523",
+      "data": [
+        4826
+      ]
+    },
+    {
+      "modis_date": "A2011065",
+      "calendar_date": "2011-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021187074351",
+      "data": [
+        7408
+      ]
+    },
+    {
+      "modis_date": "A2012017",
+      "calendar_date": "2012-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021203222319",
+      "data": [
+        3330
+      ]
+    },
+    {
+      "modis_date": "A2012033",
+      "calendar_date": "2012-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021203231933",
+      "data": [
+        5988
+      ]
+    },
+    {
+      "modis_date": "A2012049",
+      "calendar_date": "2012-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021204191012",
+      "data": [
+        7519
+      ]
+    },
+    {
+      "modis_date": "A2012065",
+      "calendar_date": "2012-03-05",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021205124023",
+      "data": [
+        7168
+      ]
+    },
+    {
+      "modis_date": "A2013017",
+      "calendar_date": "2013-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021225071311",
+      "data": [
+        5283
+      ]
+    },
+    {
+      "modis_date": "A2013033",
+      "calendar_date": "2013-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021226153635",
+      "data": [
+        6162
+      ]
+    },
+    {
+      "modis_date": "A2013049",
+      "calendar_date": "2013-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021226182950",
+      "data": [
+        6268
+      ]
+    },
+    {
+      "modis_date": "A2013065",
+      "calendar_date": "2013-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021227144650",
+      "data": [
+        4773
+      ]
+    },
+    {
+      "modis_date": "A2014017",
+      "calendar_date": "2014-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021248013722",
+      "data": [
+        7650
+      ]
+    },
+    {
+      "modis_date": "A2014033",
+      "calendar_date": "2014-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021248191948",
+      "data": [
+        7940
+      ]
+    },
+    {
+      "modis_date": "A2014049",
+      "calendar_date": "2014-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021250000538",
+      "data": [
+        7762
+      ]
+    },
+    {
+      "modis_date": "A2014065",
+      "calendar_date": "2014-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021251100141",
+      "data": [
+        8028
+      ]
+    },
+    {
+      "modis_date": "A2015017",
+      "calendar_date": "2015-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021318044211",
+      "data": [
+        7780
+      ]
+    },
+    {
+      "modis_date": "A2015033",
+      "calendar_date": "2015-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021319063105",
+      "data": [
+        6786
+      ]
+    },
+    {
+      "modis_date": "A2015049",
+      "calendar_date": "2015-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021320091634",
+      "data": [
+        8540
+      ]
+    },
+    {
+      "modis_date": "A2015065",
+      "calendar_date": "2015-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021321053913",
+      "data": [
+        7457
+      ]
+    },
+    {
+      "modis_date": "A2016017",
+      "calendar_date": "2016-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021343113947",
+      "data": [
+        5131
+      ]
+    },
+    {
+      "modis_date": "A2016033",
+      "calendar_date": "2016-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021346025607",
+      "data": [
+        6461
+      ]
+    },
+    {
+      "modis_date": "A2016049",
+      "calendar_date": "2016-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021346090002",
+      "data": [
+        7826
+      ]
+    },
+    {
+      "modis_date": "A2016065",
+      "calendar_date": "2016-03-05",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021346121127",
+      "data": [
+        6311
+      ]
+    },
+    {
+      "modis_date": "A2017017",
+      "calendar_date": "2017-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021264152831",
+      "data": [
+        7160
+      ]
+    },
+    {
+      "modis_date": "A2017033",
+      "calendar_date": "2017-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021266145514",
+      "data": [
+        5930
+      ]
+    },
+    {
+      "modis_date": "A2017049",
+      "calendar_date": "2017-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021266233924",
+      "data": [
+        2914
+      ]
+    },
+    {
+      "modis_date": "A2017065",
+      "calendar_date": "2017-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021270101332",
+      "data": [
+        4131
+      ]
+    },
+    {
+      "modis_date": "A2018017",
+      "calendar_date": "2018-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021314192340",
+      "data": [
+        6272
+      ]
+    },
+    {
+      "modis_date": "A2018033",
+      "calendar_date": "2018-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021317101713",
+      "data": [
+        7883
+      ]
+    },
+    {
+      "modis_date": "A2018049",
+      "calendar_date": "2018-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021319204735",
+      "data": [
+        7281
+      ]
+    },
+    {
+      "modis_date": "A2018065",
+      "calendar_date": "2018-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021319205214",
+      "data": [
+        3293
+      ]
+    },
+    {
+      "modis_date": "A2019017",
+      "calendar_date": "2019-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2020286170422",
+      "data": [
+        5832
+      ]
+    },
+    {
+      "modis_date": "A2019033",
+      "calendar_date": "2019-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2020287223332",
+      "data": [
+        6516
+      ]
+    },
+    {
+      "modis_date": "A2019049",
+      "calendar_date": "2019-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2020288230826",
+      "data": [
+        6188
+      ]
+    },
+    {
+      "modis_date": "A2019065",
+      "calendar_date": "2019-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2020290164119",
+      "data": [
+        3647
+      ]
+    },
+    {
+      "modis_date": "A2020017",
+      "calendar_date": "2020-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2020328132735",
+      "data": [
+        6651
+      ]
+    },
+    {
+      "modis_date": "A2020033",
+      "calendar_date": "2020-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2020329060425",
+      "data": [
+        4944
+      ]
+    },
+    {
+      "modis_date": "A2020049",
+      "calendar_date": "2020-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2020334235551",
+      "data": [
+        4679
+      ]
+    },
+    {
+      "modis_date": "A2020065",
+      "calendar_date": "2020-03-05",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2020330143238",
+      "data": [
+        3293
+      ]
+    },
+    {
+      "modis_date": "A2021017",
+      "calendar_date": "2021-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021040165249",
+      "data": [
+        5720
+      ]
+    },
+    {
+      "modis_date": "A2021033",
+      "calendar_date": "2021-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021049222524",
+      "data": [
+        7311
+      ]
+    },
+    {
+      "modis_date": "A2021049",
+      "calendar_date": "2021-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021068100722",
+      "data": [
+        7083
+      ]
+    },
+    {
+      "modis_date": "A2021065",
+      "calendar_date": "2021-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2021082133520",
+      "data": [
+        8047
+      ]
+    },
+    {
+      "modis_date": "A2022017",
+      "calendar_date": "2022-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2022035003552",
+      "data": [
+        5228
+      ]
+    },
+    {
+      "modis_date": "A2022033",
+      "calendar_date": "2022-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2022051004637",
+      "data": [
+        7652
+      ]
+    },
+    {
+      "modis_date": "A2022049",
+      "calendar_date": "2022-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2022066002454",
+      "data": [
+        7370
+      ]
+    },
+    {
+      "modis_date": "A2022065",
+      "calendar_date": "2022-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2022101213206",
+      "data": [
+        4234
+      ]
+    },
+    {
+      "modis_date": "A2023017",
+      "calendar_date": "2023-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2023034172033",
+      "data": [
+        4309
+      ]
+    },
+    {
+      "modis_date": "A2023033",
+      "calendar_date": "2023-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2023054044129",
+      "data": [
+        6991
+      ]
+    },
+    {
+      "modis_date": "A2023049",
+      "calendar_date": "2023-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2023070133935",
+      "data": [
+        6362
+      ]
+    },
+    {
+      "modis_date": "A2023065",
+      "calendar_date": "2023-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2023082003021",
+      "data": [
+        3921
+      ]
+    },
+    {
+      "modis_date": "A2024017",
+      "calendar_date": "2024-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2024038035941",
+      "data": [
+        3220
+      ]
+    },
+    {
+      "modis_date": "A2024033",
+      "calendar_date": "2024-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2024051220246",
+      "data": [
+        4489
+      ]
+    },
+    {
+      "modis_date": "A2024049",
+      "calendar_date": "2024-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2024066065436",
+      "data": [
+        7857
+      ]
+    },
+    {
+      "modis_date": "A2024065",
+      "calendar_date": "2024-03-05",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2024085182226",
+      "data": [
+        7054
+      ]
+    },
+    {
+      "modis_date": "A2025017",
+      "calendar_date": "2025-01-17",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2025035161517",
+      "data": [
+        7360
+      ]
+    },
+    {
+      "modis_date": "A2025033",
+      "calendar_date": "2025-02-02",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2025050175049",
+      "data": [
+        8139
+      ]
+    },
+    {
+      "modis_date": "A2025049",
+      "calendar_date": "2025-02-18",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2025070114727",
+      "data": [
+        7520
+      ]
+    },
+    {
+      "modis_date": "A2025065",
+      "calendar_date": "2025-03-06",
+      "band": "250m_16_days_NDVI",
+      "tile": "h12v10",
+      "proc_date": "2025090103459",
+      "data": [
+        7592
+      ]
+    }
+  ]
+}

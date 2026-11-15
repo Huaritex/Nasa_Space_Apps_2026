@@ -60,7 +60,7 @@ def precache_demo() -> Path:
                 )
             ]
         ),
-        include_diversified=False,
+        include_diversified=True,
     )
 
     print(

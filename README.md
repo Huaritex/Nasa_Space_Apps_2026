@@ -3,7 +3,7 @@
 **Herramienta de Soporte de Decisión Agronómica ante Cambio Climático**  
 *Desarrollada para el desafío "Field Shift" — NASA Space Apps Challenge.*
 
-[![Backend Tests](https://img.shields.io/badge/Backend%20Tests-154%20passed-brightgreen.svg)]()
+[![Backend Tests](https://img.shields.io/badge/Backend%20Tests-159%20passed-brightgreen.svg)]()
 [![Type Strict](https://img.shields.io/badge/TypeScript-Strict%20Verified-blue.svg)]()
 [![Deterministic Engine](https://img.shields.io/badge/Simulación-100%25%20Determinista%20(Sin%20ML)-orange.svg)]()
 [![NASA POWER Data](https://img.shields.io/badge/NASA%20POWER-MERRA--2%20%2F%20CERES-blueviolet.svg)]()
@@ -12,7 +12,7 @@
 
 ## 1. ¿Qué es RotaClima?
 
-**RotaClima** es un motor de simulación biofísica y agroclimática diseñado para productores agrícolas y técnicos de campo. Permite evaluar y comparar la rotación de cultivos actual de un lote contra 2 o 3 alternativas agronómicamente viables (perfiles **Adaptada**, **Regenerativa** y **Diversificada**), simulando su desempeño día a día contra **~34 campañas agrícolas reales** (1991–2024) provenientes del archivo satelital y de reanálisis de **NASA POWER**.
+**RotaClima** es un motor de simulación biofísica y agroclimática diseñado para productores agrícolas y técnicos de campo. Permite evaluar y comparar la rotación de cultivos actual de un lote contra **3 alternativas agronómicamente viables** (perfiles **Adaptada**, **Regenerativa** y **Diversificada**), simulando su desempeño día a día contra **~34 campañas agrícolas reales** (1991–2024) provenientes del archivo satelital y de reanálisis de **NASA POWER**, complementado con un **backtest satelital offline de 20 campañas contra NDVI de NASA MODIS (`MOD13Q1 v061`, 250 m)**.
 
 Para cada estrategia evaluada, RotaClima cuantifica:
 - **Productividad relativa esperada**: rendimiento medio respecto al potencial agroecológico sin estrés hídrico ni térmico.
@@ -43,6 +43,7 @@ El sistema implementa una arquitectura desacoplada y orientada a funciones puras
 │  - src/components/CompareTable  : Tabla comparativa de métricas        │
 │  - src/components/RotationCard  : Fichas con chips de evidencia NASA   │
 │  - src/components/CalendarChart : Calendario quincenal agroclimático   │
+│  - src/components/ModisBacktestCard: Validación satelital MODIS (E1)   │
 │  - src/api.ts                   : Cliente HTTP con fallback a demo     │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │ HTTP POST /analyze
@@ -51,6 +52,7 @@ El sistema implementa una arquitectura desacoplada y orientada a funciones puras
 ┌────────────────────────────────────────────────────────────────────────┐
 │ BACKEND (FastAPI + NumPy Vectorizado + Pandas + SciPy)                 │
 │  - app/nasa/power.py       : Cliente NASA POWER, caché y reintentos    │
+│  - app/nasa/modis.py       : Backtest offline MODIS MOD13Q1 (250 m)    │
 │  - app/engine/calendar.py  : Definición de campañas agrícolas (S/N)    │
 │  - app/engine/et0.py       : Penman-Monteith (FAO-56) y Hargreaves     │
 │  - app/engine/crop.py      : Fenología Kc en 4 fases y ventana crítica │
@@ -103,26 +105,23 @@ El motor extrae los 8 parámetros meteorológicos físicos canónicos esenciales
 
 ---
 
-### 3.2 MODIS ORNL: Validación Satelital Remota (Trabajo Futuro Planificado — Extra E1 de Fase F7)
-> **⚠️ ACLARACIÓN DE ALCANCE:**  
-> **MODIS ORNL NO está implementado ni forma parte del camino crítico de ejecución del endpoint `/analyze`.**  
-> El motor operativo de RotaClima en producción funciona exclusivamente con datos de NASA POWER. La integración de MODIS ORNL está catalogada estrictamente como **trabajo futuro / validación remota planificada** dentro del Extra E1 de la Fase F7 del plan maestro (`PLAN.md` §3 y §7).
+### 3.2 MODIS ORNL: Validación Satelital Cruzada Offline (Extra E1 Implementado — Fase F7)
+> **⚠️ ACLARACIÓN DE ARQUITECTURA (100% OFFLINE / PRECACHEADO):**  
+> **El backtest MODIS está implementado en [modis.py](file:///home/huaritex/Escritorio/Nasa_Space_Apps_2026/backend/app/nasa/modis.py) y [fetch_modis_fixture.py](file:///home/huaritex/Escritorio/Nasa_Space_Apps_2026/backend/scripts/fetch_modis_fixture.py), pero corre EXCLUSIVAMENTE en modo offline / precacheado.**  
+> El endpoint `/analyze` llama a `fetch_modis_ndvi(..., offline_only=True)` y **nunca** ejecuta peticiones de red en vivo hacia ORNL DAAC: solo lee cachés/fixtures ya descargados en disco (`backend/cache/modis/{lat:.2f}_{lon:.2f}_MOD13Q1.json` o `backend/tests/fixtures/modis_demo.json`). Si no existe archivo local para la coordenada consultada, `modis_backtest` retorna `None` de forma inmediata (`0` llamadas de red).
 
 #### Justificación Técnica de Arquitectura
-La API REST de subconjuntos de productos terrestres de MODIS en ORNL DAAC (`https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset`) impone restricciones estrictas:
+La API REST de subconjuntos de productos terrestres de MODIS en ORNL DAAC (`https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset`) impone restricciones estrictas verificadas en vivo:
 - Máximo 10 fechas compuestas por petición HTTP (peticiones mayores devuelven HTTP 400).
-- Latencia observada de ~5 segundos por bloque de fechas.
-- Para una serie de 24 años a 16 días de resolución (~550 fechas compuestas), una consulta completa requeriría más de 50 peticiones HTTP secuenciales y ~275 segundos de espera, lo cual es inaceptable para un flujo interactivo en tiempo real.
+- `ProxyTimeout` de 60 segundos en servidor, con latencias reales medidas de ~33–42 segundos por request y errores 502 si se cruza año calendario o se pide con alta concurrencia.
+- Por ello, `fetch_modis_fixture.py` descarga de forma incremental por campaña (bloques seguros $\le 4$ fechas de pico estival `A{y+1}017..A{y+1}065`, 17 de enero a 6 de marzo en hemisferio sur, `max_workers=2`, timeout 75 s, reintentos 2/4/8 s) y persiste atómicamente en disco tras cada campaña.
 
-#### Metodología Planificada para Extra E1 (Validación Fuera de Línea)
-En la fase F7, el módulo complementario `nasa/modis.py` ejecutará una validación remota cruzada *offline* para el lote demo:
-1. **Producto satelital**: `MOD13Q1` (resolución espacial de 250 m, compuestos de 16 días) extrayendo la banda `250m_16_days_NDVI` con factor de escala $0.0001$.
-2. **Caché en disco**: Descarga por bloques de $\le 10$ fechas almacenada localmente en `backend/cache/modis/`.
-3. **Cotejo con simulación biofísica**:
-   - Se extraerá el NDVI máximo observado en cada campaña agrícola.
-   - Se contrastará contra el índice de productividad simulado ($I$) de la rotación testigo mediante el coeficiente de correlación de rangos de Spearman.
-   - Se verificará empíricamente cuántas de las campañas clasificadas como "malas" por el motor biofísico caen en el tercil inferior de NDVI satelital.
-   - Los resultados se presentarán con transparencia científica tal cual arrojen las observaciones satelitales.
+#### Resultados Medidos en el Punto Demo (Santa Cruz `-17.30°, -62.25°`)
+Usando el producto satelital **`MOD13Q1 v061`** (250 m, compuestos de 16 días, banda `250m_16_days_NDVI`, escala $0.0001$, 80 ítems reales descargados para las **20 campañas** `2005/06–2024/25`), `compute_modis_backtest` coteja el NDVI máximo estival observado contra el índice simulado ($I$) de la rotación testigo (`soya@11-16 + soya@05-01`):
+- **Correlación de rangos de Spearman:** $\rho = -0.0617$ (`-0.062`), $p\text{-valor} = 0.7962$ ($n = 20$ campañas).
+- **Umbral de tercil inferior de NDVI:** $0.7260$ (`0.725967`).
+- **Campañas malas ($I < 0.60$) en el tercil inferior de NDVI:** **`1 de 1`** — la única campaña clasificada como mala por el motor (`2016/17`, `sim_index = 0.5541`, golpe de calor) registró `max_ndvi = 0.7160` ($\le 0.7260$).
+- **Transparencia científica (`PLAN.md` §3 E1 — *"Se muestra tal cual salga"*):** No se maquilla ni calibra artificialmente el resultado. La ausencia de correlación global en años normales responde al desacople físico entre un **único píxel MODIS de 250 m** (sujeto al cultivo real sembrado en ese lote en cada año, rotaciones reales, fechas de siembra variables o cobertura mixta) y la **simulación teórica de monocultivo fijo** impulsada por reanálisis regional NASA POWER a **$\approx 50\text{ km}$**, sumado a la saturación del NDVI en verano y a que el índice anual $I$ promedia también la campaña de invierno. Aun así, el evento extremo crítico (`2016/17`) sí aparece reflejado en el tercil inferior satelital.
 
 ---
 
@@ -168,7 +167,7 @@ pip install -e ".[dev]"
 pytest -q
 # Alternativa directa sin activar entorno:
 # backend/.venv/bin/pytest -q
-# Salida esperada: 154 passed en ~1-2 min
+# Salida esperada: 159 passed (100% offline)
 
 # 5. Iniciar el servidor API de FastAPI
 uvicorn app.main:app --reload --port 8000
@@ -213,17 +212,23 @@ cd backend
 
 # Generar el dataset precacheado de demostración (Santa Cruz, Bolivia):
 python scripts/precache_demo.py
-# Genera frontend/public/demo_santa_cruz.json con las 34 campañas satelitales procesadas.
+# Genera frontend/public/demo_santa_cruz.json con las 34 campañas procesadas,
+# los 4 perfiles de rotación (actual, adaptada, regenerativa, diversificada)
+# y el backtest offline de MODIS (modis_backtest).
 
 # (Opcional, requiere conexión a Internet) Descargar fixture crudo de NASA POWER para tests:
 python scripts/fetch_fixture.py
+
+# (Opcional, requiere conexión a Internet; tarda varios minutos por límites de ORNL DAAC)
+# Descargar incrementalmente las 20 campañas MODIS MOD13Q1 para tests y modo offline:
+python scripts/fetch_modis_fixture.py
 ```
 
 ---
 
-### 4.4 Validación Científica en Notebook (Puerta Go/No-Go N1/N2)
+### 4.4 Validación Científica en Notebook (Puerta Go/No-Go N1/N2 + Fase F7)
 
-El notebook `notebooks/01_validacion_motor.ipynb` constituye la puerta de control de calidad agronómica y meteorológica antes de la interfaz gráfica. Se ejecuta de forma 100% offline contra el fixture demo de Santa Cruz:
+El notebook [01_validacion_motor.ipynb](file:///home/huaritex/Escritorio/Nasa_Space_Apps_2026/notebooks/01_validacion_motor.ipynb) constituye la puerta de control de calidad agronómica y meteorológica antes de la interfaz gráfica, e incluye en su **Sección 8** la validación satelital cruzada con NASA MODIS `MOD13Q1` (Extra E1) y la comparación de los 4 perfiles incluyendo `diversificada` (Extra E2). Se ejecuta de forma 100% offline contra los fixtures demo de Santa Cruz:
 
 ```bash
 cd backend
@@ -256,12 +261,13 @@ La siguiente matriz documenta la correspondencia punto por punto entre cada requ
 | **Selección de ubicación geográfica**<br>(Coordenadas lat/lon arbitrarias, mapa interactivo, marcadores, validación de rangos $[-60, 60]$ y $[-180, 180]$) | `📍 Parcela y Rotación` | `frontend/src/views/MapForm.tsx`<br>`react-leaflet` (`MapContainer`, `Marker`) | Mapa Leaflet con captura de click, campos numéricos de lat/lon con edición libre, botón "Cargar Demo Santa Cruz". |
 | **Configuración edáfica de parcela**<br>(Selección de textura de suelo: `arenoso`, `franco`, `arcilloso`, mapeo a AWC y Curve Number CN) | `📍 Parcela y Rotación` | `frontend/src/views/MapForm.tsx` | Selector radial/tarjetas de textura con descripción de capacidad de retención de agua y susceptibilidad a escorrentía. |
 | **Constructor interactivo de rotaciones**<br>(Selección de especies del catálogo de 13 cultivos, quincenas de siembra `MM-DD`, validación de tiempos de espera y ciclos) | `📍 Parcela y Rotación` | `frontend/src/components/RotationEditor.tsx` | Selector quincenal (días 01 y 16), catálogo con distintivo de cultivo de cobertura, validación en vivo de solapamiento y tiempo de barbecho ($\ge 15$ días). |
-| **Opción de rotación diversificada**<br>(Inclusión de rotaciones bianuales con multiconjuntos de cultivos distintos) | `📍 Parcela y Rotación` | `frontend/src/views/MapForm.tsx` | Checkbox para habilitar ciclo multianual de 2 años (`include_diversified`). |
+| **Opción de rotación diversificada (Extra E2)**<br>(Inclusión de rotación bianual multiespecie $\ge 3$ familias y $\ge 3$ cultivos cosechables) | `📍 Parcela y Rotación` | `frontend/src/App.tsx`<br>`frontend/src/views/MapForm.tsx` | Habilitada por defecto en el flujo principal (`include_diversified = true`); checkbox configurable para incluir o excluir el ciclo bianual diversificado. |
 | **Diagnóstico de cambio climático regional**<br>(Comparación de 15 años base `before` 1991–2005 vs 15 años recientes `recent` 2010–2024 sobre 8 métricas) | `🌦️ Tu Clima Cambió` | `frontend/src/views/ClimateShift.tsx`<br>`frontend/src/components/MetricDelta.tsx` | Tarjetas comparativas con valor antes/ahora, variación absoluta/porcentual, histogramas o barras Recharts y estado de tendencia. |
 | **Significancia estadística de tendencias**<br>(Prueba no paramétrica de Mann-Whitney U con umbral de significancia $p < 0.10$) | `🌦️ Tu Clima Cambió` | `frontend/src/components/MetricDelta.tsx` | Distintivos visuales con valor $p$; etiqueta explícita de `"No significativo"` cuando $p \ge 0.10$ para evitar falsas alarmas. |
 | **Calendario agroclimático quincenal**<br>(Distribución estacional de 24 quincenas de lluvia y $ET_0$ para periodos `before` vs `recent`) | `📅 Calendario Agroclimático` | `frontend/src/components/CalendarChart.tsx`<br>`recharts` (`BarChart`, `ComposedChart`) | Gráfica estacional de 24 quincenas comparando precipitación y demanda evapotranspirativa histórica y reciente. |
 | **Alineación fenológica de cultivos**<br>(Superposición de fases de desarrollo y ventana crítica de floración con el calendario climático) | `📅 Calendario Agroclimático` | `frontend/src/components/CalendarChart.tsx` | Barras de ciclo de cultivo divididas en 4 etapas FAO-56 con resaltado de la ventana sensible a sequía y golpe de calor. |
-| **Generación de alternativas agronómicas**<br>(Presentación simultánea de rotación Actual vs Adaptada vs Regenerativa vs Diversificada) | `⚖️ Comparar Rotaciones` | `frontend/src/views/Compare.tsx`<br>`frontend/src/components/CompareTable.tsx` | Pestañas/columnas comparativas con métricas unificadas, productividad esperada y costo de transición. |
+| **Generación de alternativas agronómicas**<br>(Presentación simultánea de los 4 perfiles: Actual vs Adaptada vs Regenerativa vs Diversificada) | `⚖️ Comparar Rotaciones` | `frontend/src/views/Compare.tsx`<br>`frontend/src/components/CompareTable.tsx` | Tabla comparativa de 5 columnas y grilla 2×2 de fichas con métricas unificadas, productividad esperada y riesgo histórico. |
+| **Validación satelital cruzada MODIS (Extra E1)**<br>(Cotejo offline de 20 campañas entre `max_ndvi` MOD13Q1 250 m y `sim_index` de la rotación actual) | `⚖️ Comparar Rotaciones` | `frontend/src/components/ModisBacktestCard.tsx`<br>`backend/app/nasa/modis.py` | Tarjeta con Spearman $\rho$, p-valor, campañas malas en tercil inferior de NDVI, gráfico `ComposedChart` y tabla semántica colapsable accesible. |
 | **Matriz de riesgo y campañas malas**<br>(Frecuencia de cosechas fallidas "$X$ de 20 años", percentil 10 $P_{10}$, los 3 peores años históricos) | `⚖️ Comparar Rotaciones` | `frontend/src/components/CompareTable.tsx`<br>`frontend/src/components/RotationCard.tsx` | Semáforos de riesgo, contador textual directo para agricultores, lista de campañas críticas históricas (ej. 2016/17, 2023/24). |
 | **Tira gráfica de 20 campañas**<br>(Visualización cronológica año por año del desempeño relativo de cada rotación) | `⚖️ Comparar Rotaciones` | `frontend/src/views/Compare.tsx`<br>`frontend/src/components/RotationCard.tsx` | Tira de bloques de colores representando cada una de las últimas 20 campañas (verde: normal; rojo: mala con $I < 0.60$). |
 | **Atribución de factor limitante**<br>(Identificación del estrés dominante por campaña: agua, calor, helada, temperatura, ninguno) | `⚖️ Comparar Rotaciones` | `frontend/src/components/RotationCard.tsx` | Etiquetas de diagnóstico físico indicando si la pérdida de rendimiento se debió a sequía o a estrés térmico en floración. |
@@ -327,8 +333,8 @@ La siguiente matriz documenta la correspondencia entre las exigencias del reto d
 
 | Requisito del Desafío ("Field Shift") | Dónde y Cómo se Resuelve en RotaClima |
 |---|---|
-| **$\ge 3$ estrategias de rotación incluida la actual** | **Vista (c) Comparar rotaciones**: Muestra lado a lado la rotación **Actual** ingresada por el productor, la alternativa **Adaptada** (cambio mínimo con fechas reoptimizadas), la alternativa **Regenerativa** (prioriza salud del suelo sin comprometer productividad) y opcionalmente la **Diversificada** (ciclo bianual multiespecie). |
-| **Explicación clara del por qué se sugiere cada rotación** | **Fichas de Decisión (`card.why`)**: Justificación causal basada en hechos medibles reales del motor (en el demo de Santa Cruz, `Adaptada` `mijo@11-16 + soya@03-16` reduce campañas malas de `1` a `0 de 20` y sube productividad al `112.4%`; `Regenerativa` eleva el puntaje de suelo de `47.9` a `79.0 / 100`). |
+| **$\ge 3$ estrategias de rotación incluida la actual** | **Vista (c) Comparar rotaciones**: Muestra lado a lado los **4 perfiles** activos por defecto: **Actual**, **Adaptada** (cambio mínimo con fechas reoptimizadas), **Regenerativa** (prioriza salud del suelo sin comprometer productividad) y **Diversificada** (ciclo bianual con $\ge 3$ familias y $\ge 3$ cultivos cosechables). |
+| **Explicación clara del por qué se sugiere cada rotación** | **Fichas de Decisión (`card.why`)**: Justificación causal basada en hechos medibles reales del motor (en el demo de Santa Cruz, `Adaptada` `mijo@11-16 + soya@03-16` reduce campañas malas de `1` a `0 de 20` y sube productividad al `112.4%`; `Regenerativa` eleva el puntaje de suelo de `47.9` a `79.0 / 100`; `Diversificada` `algodon@09-16 + sorgo@04-01 | mijo@11-16 + girasol@03-16` alcanza `115.4%` de productividad con `0/20` malas y suelo `60.6 / 100`). |
 | **Evaluación explícita de riesgos** | **Fichas de Decisión (`card.risks`) y Tira Gráfica de 20 Campañas**: Conteo exacto de campañas malas, lista de los 3 peores años históricos de la serie, advertencia de factor limitante dominante (agua, calor, helada) y nota sobre la resolución macro-regional de 50 km. |
 | **Identificación de beneficios esperados** | **Fichas de Decisión (`card.benefits`) y Tabla Comparativa**: Cuantificación del porcentaje de productividad respecto a la actual, disminución en el número de campañas fallidas, mejora en cobertura ante lluvias torrenciales y aumento en familias botánicas. |
 | **Datos específicos de NASA que respaldan cada conclusión** | **Chips Interactivos de Evidencia**: Cada afirmación (`Claim`) cuenta con botones de evidencia desplegables que exhiben el valor numérico, la unidad, el conjunto satelital (`NASA POWER MERRA-2 / CERES SYN1deg`), los parámetros meteorológicos exactos consultados y el periodo de años evaluado. |
@@ -340,9 +346,9 @@ La siguiente matriz documenta la correspondencia entre las exigencias del reto d
 1. **`0:00–0:25` — Portada y Problema:** Plantear el desafío *"Field Shift"*: una rotación planificada para el clima de hace dos décadas ha quedado desfasada. RotaClima analiza 34 años de clima diario de NASA POWER de forma 100% determinista y sin cajas negras de ML.
 2. **`0:25–0:50` — Vista (a) Parcela y rotación:** Seleccionar el lote en Santa Cruz (`-17.30, -62.25`) en el mapa o cargar el demo en un clic, seleccionar textura `franco` y rotación actual `soya@11-16 + soya@05-01` sin requerir sensores costosos ni registros previos.
 3. **`0:50–1:25` — Vista (b) Tu clima cambió:** Analizar la comparación `before` (`1991–2005`) vs `recent` (`2010–2024`): reducción de la estación de lluvias en `-64.1 días` ($p = 0.0055$), caída de lluvia estival en `-178.3 mm` ($p = 0.0006$) y aumento de días con calor extremo $> 35^\circ\text{C}$ en `+27.7 días` ($p = 0.0084$), identificando con rigor las variables sin significancia estadística ($p \ge 0.10$).
-4. **`1:25–2:20` — Vista (c) Comparación de rotaciones y fichas:** Contrastar la rotación `Actual` (`1/20` mala en `2016/17`, suelo `47.9/100`) frente a `Adaptada` (`0/20` malas, `112.4%` productividad, suelo `63.8/100`) y `Regenerativa` (`0/20` malas, `86.3%` productividad, suelo `79.0/100`), explorando los chips de evidencia satelital de NASA POWER.
+4. **`1:25–2:20` — Vista (c) Comparación de rotaciones, fichas y backtest MODIS:** Contrastar la rotación `Actual` (`1/20` mala en `2016/17`, suelo `47.9/100`) frente a `Adaptada` (`0/20` malas, `112.4%` productividad, suelo `63.8/100`), `Regenerativa` (`0/20` malas, `86.3%` productividad, suelo `79.0/100`) y `Diversificada` (`0/20` malas, `115.4%` productividad, suelo `60.6/100`), explorando los chips de evidencia satelital de NASA POWER y la tarjeta de cotejo offline contra **NASA MODIS `MOD13Q1`** (`1/1` campaña mala en el tercil inferior NDVI, $\rho = -0.062$, $p = 0.796$).
 5. **`2:20–2:40` — Calendario agroclimático:** Examinar las 24 quincenas anuales de lluvia y $ET_0$ vinculadas con la ventana crítica de floración de los cultivos para verificar cómo la rotación adaptada esquiva las sequías intraestacionales.
-6. **`2:40–3:00` — Cierre y límites:** Recorrer las limitaciones metodológicas declaradas (resolución regional de 50 km, modelo de balde 1D, supuestos S1–S12) y presentar el siguiente paso de validación remota fuera de línea con NDVI de MODIS (`MOD13Q1`, Extra E1).
+6. **`2:40–3:00` — Cierre y límites:** Recorrer las limitaciones metodológicas declaradas (resolución regional de 50 km, modelo de balde 1D, supuestos S1–S12) y destacar cómo el contraste transparente entre MODIS a 250 m y POWER a 50 km refuerza la honestidad científica de RotaClima sin maquillaje estadístico.
 
 ---
 
@@ -366,7 +372,8 @@ Nasa_Space_Apps_2026/
 │   │   │   ├── crops.json    # Catálogo agronómico de 13 cultivos con fuentes y verificación
 │   │   │   └── crops.py      # Cargador y validaciones del catálogo
 │   │   ├── nasa/
-│   │   │   └── power.py      # Cliente de NASA POWER, caché en disco y conversiones
+│   │   │   ├── power.py      # Cliente de NASA POWER, caché en disco y conversiones
+│   │   │   └── modis.py      # Backtest satelital offline NASA MODIS MOD13Q1 (Extra E1)
 │   │   └── engine/           # Funciones biofísicas puras (sin red ni I/O)
 │   │       ├── calendar.py   # Calendario agrícola quincenal y particiones temporales
 │   │       ├── et0.py        # Penman-Monteith, radiación Ra y Hargreaves fallback
@@ -378,13 +385,16 @@ Nasa_Space_Apps_2026/
 │   │       ├── climate.py    # Perfil climático antes/ahora y test de Mann-Whitney U
 │   │       ├── alternatives.py # Enumeración de planes y selección lexicográfica
 │   │       └── cards.py      # Generador determinista de fichas de recomendación
-│   ├── cache/power/          # Caché local de respuestas JSON de NASA POWER
+│   ├── cache/
+│   │   ├── power/            # Caché local de respuestas JSON de NASA POWER
+│   │   └── modis/            # Caché local de subconjuntos MODIS MOD13Q1 (offline)
 │   ├── scripts/
-│   │   ├── fetch_fixture.py  # Descarga de datos satelitales para pruebas locales
-│   │   └── precache_demo.py  # Generador de demo_santa_cruz.json precacheado
+│   │   ├── fetch_fixture.py       # Descarga de datos NASA POWER para pruebas locales
+│   │   ├── fetch_modis_fixture.py # Descarga incremental offline de MODIS MOD13Q1 (Extra E1)
+│   │   └── precache_demo.py       # Generador de demo_santa_cruz.json (4 perfiles + MODIS)
 │   └── tests/
-│       ├── fixtures/         # power_demo.json (12.784 días para tests sin conexión)
-│       └── test_*.py         # 154 pruebas unitarias que cubren todas las secciones de PLAN.md
+│       ├── fixtures/         # power_demo.json (12.784 días) y modis_demo.json (20 campañas)
+│       └── test_*.py         # Pruebas unitarias offline (PLAN.md §6 + Extra E1/E2)
 │
 ├── frontend/
 │   ├── package.json          # Vite, React 19, TypeScript, Leaflet, Recharts
@@ -401,11 +411,12 @@ Nasa_Space_Apps_2026/
 │       │   ├── ClimateShift.tsx # Vista (b): Diagnóstico "Tu clima cambió"
 │       │   └── Compare.tsx   # Vista (c): Comparativa, tiras y fichas de decisión
 │       └── components/
-│           ├── RotationEditor.tsx # Editor interactivo de rotaciones multianuales
-│           ├── CompareTable.tsx   # Tabla comparativa de métricas agronómicas
-│           ├── RotationCard.tsx   # Ficha con chips interactivos de evidencia NASA
-│           ├── MetricDelta.tsx    # Tarjeta de tendencia climática con gráficos Recharts
-│           └── CalendarChart.tsx  # Calendario agroclimático quincenal y barras fenológicas
+│           ├── RotationEditor.tsx    # Editor interactivo de rotaciones multianuales
+│           ├── CompareTable.tsx      # Tabla comparativa de métricas agronómicas (5 cols)
+│           ├── RotationCard.tsx      # Ficha con chips interactivos de evidencia NASA
+│           ├── ModisBacktestCard.tsx # Tarjeta de backtest satelital MODIS (Extra E1)
+│           ├── MetricDelta.tsx       # Tarjeta de tendencia climática con gráficos Recharts
+│           └── CalendarChart.tsx     # Calendario agroclimático quincenal y barras fenológicas
 │
 ├── notebooks/
 │   └── 01_validacion_motor.ipynb # Notebook de validación científica y Go/No-Go N1/N2
@@ -419,7 +430,9 @@ Nasa_Space_Apps_2026/
 ## 9. Licencia, Atribución y Créditos Científicos
 
 - **NASA Space Apps Challenge 2026** — Desafío *"Field Shift"*.
-- **Datos Satelitales y de Reanálisis**: Proporcionados por cortesía del proyecto **NASA POWER** (*Prediction Of Worldwide Energy Resources*), financiado por el Programa de Ciencias Aplicadas de la NASA (Directorio de Misiones Científicas).
+- **Datos Satelitales y de Reanálisis**:
+  - Clima diario (1991–2025): **NASA POWER** (*Prediction Of Worldwide Energy Resources*, MERRA-2 / CERES SYN1deg), financiado por el Programa de Ciencias Aplicadas de la NASA.
+  - Vegetación satelital de validación offline (2005–2025): **NASA MODIS `MOD13Q1 v061`** (250 m, NDVI compuesto cada 16 días), distribuido vía **ORNL DAAC**.
 - **Modelos Agronómicos e Hidrológicos**:
   - Evapotranspiración y fenología de cultivos: **FAO Irrigation and Drainage Paper 56** (Allen, Pereira, Raes, & Smith, 1998).
   - Escorrentía y balance hídrico: **USDA Soil Conservation Service Curve Number** (SCS-CN, National Engineering Handbook, Section 4).

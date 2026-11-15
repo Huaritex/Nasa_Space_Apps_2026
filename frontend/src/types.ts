@@ -220,6 +220,26 @@ export interface Meta {
   assumptions: string[];
 }
 
+export interface ModisSeasonPoint {
+  season: number;
+  label: string;
+  max_ndvi: number;
+  sim_index: number;
+  bad: boolean;
+  in_low_tertile: boolean;
+}
+
+export interface ModisBacktestOut {
+  spearman_rho: number;
+  p_value: number;
+  tertile_threshold: number;
+  bad_in_low_ndvi_tertile: number;
+  total_bad_seasons: number;
+  n_seasons: number;
+  series: ModisSeasonPoint[];
+  source: Source;
+}
+
 export interface AnalyzeResponse {
   meta: Meta;
   climate: ClimateMetric[];
@@ -228,4 +248,5 @@ export interface AnalyzeResponse {
     recent: Climatology;
   };
   rotations: RotationResult[]; // Fixed order: actual, adaptada, regenerativa[, diversificada]
+  modis_backtest?: ModisBacktestOut | null;
 }

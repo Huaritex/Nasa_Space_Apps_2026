@@ -4574,6 +4574,887 @@
         "relaxed_constraints": [],
         "improves_on_current": true
       }
+    },
+    {
+      "profile": "diversificada",
+      "rotation": {
+        "years": [
+          {
+            "slots": [
+              {
+                "crop_id": "algodon",
+                "sow_date": "09-16"
+              },
+              {
+                "crop_id": "sorgo",
+                "sow_date": "04-01"
+              }
+            ]
+          },
+          {
+            "slots": [
+              {
+                "crop_id": "mijo",
+                "sow_date": "11-16"
+              },
+              {
+                "crop_id": "girasol",
+                "sow_date": "03-16"
+              }
+            ]
+          }
+        ]
+      },
+      "slots": [
+        [
+          {
+            "crop_id": "algodon",
+            "crop_name": "Algodón",
+            "family": "Malvaceae",
+            "harvested": true,
+            "sow_date": "09-16",
+            "sow_offset": 77,
+            "stage_ends": [
+              107,
+              157,
+              212,
+              257
+            ],
+            "sens_window": [
+              152,
+              182
+            ],
+            "prev_mode": "fallow",
+            "mean_yield": 0.87473371183216,
+            "failures": 0
+          },
+          {
+            "crop_id": "sorgo",
+            "crop_name": "Sorgo",
+            "family": "Poaceae",
+            "harvested": true,
+            "sow_date": "04-01",
+            "sow_offset": 274,
+            "stage_ends": [
+              294,
+              329,
+              369,
+              399
+            ],
+            "sens_window": [
+              324,
+              354
+            ],
+            "prev_mode": "crop",
+            "mean_yield": 0.853200329675194,
+            "failures": 0
+          }
+        ],
+        [
+          {
+            "crop_id": "mijo",
+            "crop_name": "Mijo",
+            "family": "Poaceae",
+            "harvested": true,
+            "sow_date": "11-16",
+            "sow_offset": 138,
+            "stage_ends": [
+              153,
+              178,
+              218,
+              243
+            ],
+            "sens_window": [
+              173,
+              203
+            ],
+            "prev_mode": "fallow",
+            "mean_yield": 0.9187096581620968,
+            "failures": 1
+          },
+          {
+            "crop_id": "girasol",
+            "crop_name": "Girasol",
+            "family": "Asteraceae",
+            "harvested": true,
+            "sow_date": "03-16",
+            "sow_offset": 258,
+            "stage_ends": [
+              283,
+              318,
+              363,
+              388
+            ],
+            "sens_window": [
+              313,
+              343
+            ],
+            "prev_mode": "crop",
+            "mean_yield": 0.8810123216201337,
+            "failures": 0
+          }
+        ]
+      ],
+      "metrics": {
+        "mean_index": 0.8819140053223962,
+        "p10_index": 0.7958011300740895,
+        "mean_productivity": 1.7638280106447923,
+        "productivity_vs_current": 115.37192683150221,
+        "bad_seasons": 0,
+        "n_seasons": 20,
+        "bad_before": 0,
+        "bad_recent": 0,
+        "n_period": 15,
+        "soil": {
+          "total": 60.56,
+          "nitrogen": 10.0,
+          "diversity": 74.38,
+          "erosion": 82.88,
+          "organic_matter": 75.0
+        }
+      },
+      "seasons": [
+        {
+          "season": 1991,
+          "label": "1991/92",
+          "index": 0.9561478331501831,
+          "productivity": 1.9122956663003663,
+          "bad": false,
+          "limiting": "temperatura"
+        },
+        {
+          "season": 1992,
+          "label": "1992/93",
+          "index": 0.9111308088475396,
+          "productivity": 1.8222616176950792,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 1993,
+          "label": "1993/94",
+          "index": 0.8961864211787653,
+          "productivity": 1.7923728423575307,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 1994,
+          "label": "1994/95",
+          "index": 0.8930370851165996,
+          "productivity": 1.7860741702331993,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 1995,
+          "label": "1995/96",
+          "index": 0.9509270975720432,
+          "productivity": 1.9018541951440864,
+          "bad": false,
+          "limiting": "temperatura"
+        },
+        {
+          "season": 1996,
+          "label": "1996/97",
+          "index": 0.9860338097951431,
+          "productivity": 1.9720676195902862,
+          "bad": false,
+          "limiting": "ninguno"
+        },
+        {
+          "season": 1997,
+          "label": "1997/98",
+          "index": 0.8675293291045648,
+          "productivity": 1.7350586582091296,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 1998,
+          "label": "1998/99",
+          "index": 0.9512933904828746,
+          "productivity": 1.9025867809657493,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 1999,
+          "label": "1999/00",
+          "index": 0.8957294247502359,
+          "productivity": 1.7914588495004717,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2000,
+          "label": "2000/01",
+          "index": 0.9637336733870767,
+          "productivity": 1.9274673467741534,
+          "bad": false,
+          "limiting": "temperatura"
+        },
+        {
+          "season": 2001,
+          "label": "2001/02",
+          "index": 0.9614305244747132,
+          "productivity": 1.9228610489494264,
+          "bad": false,
+          "limiting": "temperatura"
+        },
+        {
+          "season": 2002,
+          "label": "2002/03",
+          "index": 0.9793555469420048,
+          "productivity": 1.9587110938840095,
+          "bad": false,
+          "limiting": "ninguno"
+        },
+        {
+          "season": 2003,
+          "label": "2003/04",
+          "index": 0.9483559536164905,
+          "productivity": 1.896711907232981,
+          "bad": false,
+          "limiting": "temperatura"
+        },
+        {
+          "season": 2004,
+          "label": "2004/05",
+          "index": 0.9572649066462005,
+          "productivity": 1.914529813292401,
+          "bad": false,
+          "limiting": "temperatura"
+        },
+        {
+          "season": 2005,
+          "label": "2005/06",
+          "index": 0.9693937056941663,
+          "productivity": 1.9387874113883325,
+          "bad": false,
+          "limiting": "temperatura"
+        },
+        {
+          "season": 2006,
+          "label": "2006/07",
+          "index": 0.9125191317911474,
+          "productivity": 1.8250382635822948,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2007,
+          "label": "2007/08",
+          "index": 0.9602776277520525,
+          "productivity": 1.920555255504105,
+          "bad": false,
+          "limiting": "temperatura"
+        },
+        {
+          "season": 2008,
+          "label": "2008/09",
+          "index": 0.9016729849238584,
+          "productivity": 1.8033459698477168,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2009,
+          "label": "2009/10",
+          "index": 0.8532833440892942,
+          "productivity": 1.7065666881785884,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2010,
+          "label": "2010/11",
+          "index": 0.8050673236636047,
+          "productivity": 1.6101346473272093,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2011,
+          "label": "2011/12",
+          "index": 0.8320100282028422,
+          "productivity": 1.6640200564056844,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2012,
+          "label": "2012/13",
+          "index": 0.9325072953236626,
+          "productivity": 1.8650145906473252,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2013,
+          "label": "2013/14",
+          "index": 0.8144003369475561,
+          "productivity": 1.6288006738951122,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2014,
+          "label": "2014/15",
+          "index": 0.9493205257958806,
+          "productivity": 1.898641051591761,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2015,
+          "label": "2015/16",
+          "index": 0.7979012504009876,
+          "productivity": 1.5958025008019752,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2016,
+          "label": "2016/17",
+          "index": 0.706801539614525,
+          "productivity": 1.41360307922905,
+          "bad": false,
+          "limiting": "calor"
+        },
+        {
+          "season": 2017,
+          "label": "2017/18",
+          "index": 0.8045956108418553,
+          "productivity": 1.6091912216837105,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2018,
+          "label": "2018/19",
+          "index": 0.9766754074600973,
+          "productivity": 1.9533508149201946,
+          "bad": false,
+          "limiting": "temperatura"
+        },
+        {
+          "season": 2019,
+          "label": "2019/20",
+          "index": 0.9714105294390922,
+          "productivity": 1.9428210588781845,
+          "bad": false,
+          "limiting": "temperatura"
+        },
+        {
+          "season": 2020,
+          "label": "2020/21",
+          "index": 0.9138139773848059,
+          "productivity": 1.8276279547696117,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2021,
+          "label": "2021/22",
+          "index": 0.8368625370538646,
+          "productivity": 1.6737250741077292,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2022,
+          "label": "2022/23",
+          "index": 0.9606824957937671,
+          "productivity": 1.9213649915875342,
+          "bad": false,
+          "limiting": "ninguno"
+        },
+        {
+          "season": 2023,
+          "label": "2023/24",
+          "index": 0.776900047132006,
+          "productivity": 1.553800094264012,
+          "bad": false,
+          "limiting": "agua"
+        },
+        {
+          "season": 2024,
+          "label": "2024/25",
+          "index": 0.9621844071428572,
+          "productivity": 1.9243688142857145,
+          "bad": false,
+          "limiting": "temperatura"
+        }
+      ],
+      "card": {
+        "profile": "diversificada",
+        "title": "Rotación diversificada",
+        "why": [
+          {
+            "text": "Rotación optimizada para reducir riesgo climático y consumo hídrico.",
+            "evidence": [
+              {
+                "label": "Campañas malas evaluadas",
+                "value": 0.0,
+                "unit": "de 20",
+                "source": {
+                  "dataset": "NASA POWER (MERRA-2 / CERES SYN1deg)",
+                  "parameters": [
+                    "PRECTOTCORR",
+                    "T2M_MAX",
+                    "T2M_MIN",
+                    "RH2M",
+                    "WS2M",
+                    "ALLSKY_SFC_SW_DWN",
+                    "PS"
+                  ],
+                  "period": "campañas 2005 a 2024"
+                }
+              }
+            ]
+          }
+        ],
+        "benefits": [
+          {
+            "text": "1 campañas malas menos de 20.",
+            "evidence": [
+              {
+                "label": "Reducción de campañas malas",
+                "value": 1.0,
+                "unit": "campañas",
+                "source": {
+                  "dataset": "NASA POWER (MERRA-2 / CERES SYN1deg)",
+                  "parameters": [
+                    "PRECTOTCORR",
+                    "T2M_MAX",
+                    "T2M_MIN",
+                    "RH2M",
+                    "WS2M",
+                    "ALLSKY_SFC_SW_DWN",
+                    "PS"
+                  ],
+                  "period": "campañas 2005 a 2024"
+                }
+              },
+              {
+                "label": "Total campañas evaluadas",
+                "value": 20.0,
+                "unit": "campañas",
+                "source": {
+                  "dataset": "NASA POWER (MERRA-2 / CERES SYN1deg)",
+                  "parameters": [
+                    "PRECTOTCORR",
+                    "T2M_MAX",
+                    "T2M_MIN",
+                    "RH2M",
+                    "WS2M",
+                    "ALLSKY_SFC_SW_DWN",
+                    "PS"
+                  ],
+                  "period": "campañas 2005 a 2024"
+                }
+              }
+            ]
+          },
+          {
+            "text": "Productividad 115% respecto de la actual.",
+            "evidence": [
+              {
+                "label": "Productividad relativa",
+                "value": 115.0,
+                "unit": "%",
+                "source": {
+                  "dataset": "NASA POWER (MERRA-2 / CERES SYN1deg)",
+                  "parameters": [
+                    "PRECTOTCORR",
+                    "T2M_MAX",
+                    "T2M_MIN",
+                    "RH2M",
+                    "WS2M",
+                    "ALLSKY_SFC_SW_DWN",
+                    "PS"
+                  ],
+                  "period": "campañas 2005 a 2024"
+                }
+              }
+            ]
+          },
+          {
+            "text": "El 83% de la escorrentía de lluvias intensas cae con el suelo cubierto (antes 63%).",
+            "evidence": [
+              {
+                "label": "Protección contra erosión propuesta",
+                "value": 83.0,
+                "unit": "%",
+                "source": {
+                  "dataset": "NASA POWER (MERRA-2 / CERES SYN1deg)",
+                  "parameters": [
+                    "PRECTOTCORR"
+                  ],
+                  "period": "campañas 2005 a 2024"
+                }
+              },
+              {
+                "label": "Protección contra erosión actual",
+                "value": 63.0,
+                "unit": "%",
+                "source": {
+                  "dataset": "NASA POWER (MERRA-2 / CERES SYN1deg)",
+                  "parameters": [
+                    "PRECTOTCORR"
+                  ],
+                  "period": "campañas 2005 a 2024"
+                }
+              }
+            ]
+          },
+          {
+            "text": "3 familias botánicas en el ciclo (antes 1).",
+            "evidence": [
+              {
+                "label": "Familias botánicas en rotación propuesta",
+                "value": 3.0,
+                "unit": "familias",
+                "source": {
+                  "dataset": "Regla agronómica",
+                  "parameters": [],
+                  "period": "constante"
+                }
+              },
+              {
+                "label": "Familias botánicas en rotación actual",
+                "value": 1.0,
+                "unit": "familias",
+                "source": {
+                  "dataset": "Regla agronómica",
+                  "parameters": [],
+                  "period": "constante"
+                }
+              }
+            ]
+          }
+        ],
+        "risks": [
+          {
+            "text": "Campaña mala (menos del 60% del potencial) en 0 de 20: ninguna registrada.",
+            "evidence": [
+              {
+                "label": "Umbral de campaña mala",
+                "value": 60.0,
+                "unit": "%",
+                "source": {
+                  "dataset": "Regla agronómica",
+                  "parameters": [],
+                  "period": "constante"
+                }
+              },
+              {
+                "label": "Campañas malas",
+                "value": 0.0,
+                "unit": "de 20",
+                "source": {
+                  "dataset": "NASA POWER (MERRA-2 / CERES SYN1deg)",
+                  "parameters": [
+                    "PRECTOTCORR",
+                    "T2M_MAX",
+                    "T2M_MIN",
+                    "RH2M",
+                    "WS2M",
+                    "ALLSKY_SFC_SW_DWN",
+                    "PS"
+                  ],
+                  "period": "campañas 2005 a 2024"
+                }
+              },
+              {
+                "label": "Total campañas evaluadas",
+                "value": 20.0,
+                "unit": "campañas",
+                "source": {
+                  "dataset": "NASA POWER (MERRA-2 / CERES SYN1deg)",
+                  "parameters": [
+                    "PRECTOTCORR",
+                    "T2M_MAX",
+                    "T2M_MIN",
+                    "RH2M",
+                    "WS2M",
+                    "ALLSKY_SFC_SW_DWN",
+                    "PS"
+                  ],
+                  "period": "campañas 2005 a 2024"
+                }
+              }
+            ]
+          },
+          {
+            "text": "Factor limitante más frecuente: agua (13 de 20 campañas).",
+            "evidence": [
+              {
+                "label": "Frecuencia factor agua",
+                "value": 13.0,
+                "unit": "de 20",
+                "source": {
+                  "dataset": "NASA POWER (MERRA-2 / CERES SYN1deg)",
+                  "parameters": [
+                    "PRECTOTCORR",
+                    "T2M_MAX",
+                    "T2M_MIN",
+                    "RH2M",
+                    "WS2M",
+                    "ALLSKY_SFC_SW_DWN",
+                    "PS"
+                  ],
+                  "period": "campañas 2005 a 2024"
+                }
+              },
+              {
+                "label": "Total campañas evaluadas",
+                "value": 20.0,
+                "unit": "campañas",
+                "source": {
+                  "dataset": "NASA POWER (MERRA-2 / CERES SYN1deg)",
+                  "parameters": [
+                    "PRECTOTCORR",
+                    "T2M_MAX",
+                    "T2M_MIN",
+                    "RH2M",
+                    "WS2M",
+                    "ALLSKY_SFC_SW_DWN",
+                    "PS"
+                  ],
+                  "period": "campañas 2005 a 2024"
+                }
+              }
+            ]
+          },
+          {
+            "text": "Repite familia botánica en 1 de 4 transiciones.",
+            "evidence": [
+              {
+                "label": "Transiciones con misma familia",
+                "value": 1.0,
+                "unit": "de 4",
+                "source": {
+                  "dataset": "Regla agronómica",
+                  "parameters": [],
+                  "period": "constante"
+                }
+              },
+              {
+                "label": "Total transiciones del ciclo",
+                "value": 4.0,
+                "unit": "transiciones",
+                "source": {
+                  "dataset": "Regla agronómica",
+                  "parameters": [],
+                  "period": "constante"
+                }
+              }
+            ]
+          },
+          {
+            "text": "Resolución ≈50 km: es el clima regional, no el de tu parcela.",
+            "evidence": [
+              {
+                "label": "Resolución espacial del reanálisis",
+                "value": 50.0,
+                "unit": "km",
+                "source": {
+                  "dataset": "NASA POWER (MERRA-2 / CERES SYN1deg)",
+                  "parameters": [
+                    "PRECTOTCORR"
+                  ],
+                  "period": "constante"
+                }
+              }
+            ]
+          }
+        ],
+        "changes_vs_current": [
+          "Reemplazo de Soya por Algodón en año 1.",
+          "Reemplazo de Soya por Sorgo en año 1."
+        ],
+        "relaxed_constraints": [],
+        "improves_on_current": true
+      }
     }
-  ]
+  ],
+  "modis_backtest": {
+    "spearman_rho": -0.06165413533834586,
+    "p_value": 0.7962393511384775,
+    "tertile_threshold": 0.7259666666666668,
+    "bad_in_low_ndvi_tertile": 1,
+    "total_bad_seasons": 1,
+    "n_seasons": 20,
+    "series": [
+      {
+        "season": 2005,
+        "label": "2005/06",
+        "max_ndvi": 0.7481,
+        "sim_index": 0.7991109471293518,
+        "bad": false,
+        "in_low_tertile": false
+      },
+      {
+        "season": 2006,
+        "label": "2006/07",
+        "max_ndvi": 0.663,
+        "sim_index": 0.7402650167057496,
+        "bad": false,
+        "in_low_tertile": true
+      },
+      {
+        "season": 2007,
+        "label": "2007/08",
+        "max_ndvi": 0.7230000000000001,
+        "sim_index": 0.8484903350286834,
+        "bad": false,
+        "in_low_tertile": true
+      },
+      {
+        "season": 2008,
+        "label": "2008/09",
+        "max_ndvi": 0.7319,
+        "sim_index": 0.7738536222852384,
+        "bad": false,
+        "in_low_tertile": false
+      },
+      {
+        "season": 2009,
+        "label": "2009/10",
+        "max_ndvi": 0.7914,
+        "sim_index": 0.7926424197122215,
+        "bad": false,
+        "in_low_tertile": false
+      },
+      {
+        "season": 2010,
+        "label": "2010/11",
+        "max_ndvi": 0.7408,
+        "sim_index": 0.7450180329820533,
+        "bad": false,
+        "in_low_tertile": false
+      },
+      {
+        "season": 2011,
+        "label": "2011/12",
+        "max_ndvi": 0.7519,
+        "sim_index": 0.7170735903375309,
+        "bad": false,
+        "in_low_tertile": false
+      },
+      {
+        "season": 2012,
+        "label": "2012/13",
+        "max_ndvi": 0.6268,
+        "sim_index": 0.8147339880570408,
+        "bad": false,
+        "in_low_tertile": true
+      },
+      {
+        "season": 2013,
+        "label": "2013/14",
+        "max_ndvi": 0.8028000000000001,
+        "sim_index": 0.7903226102188214,
+        "bad": false,
+        "in_low_tertile": false
+      },
+      {
+        "season": 2014,
+        "label": "2014/15",
+        "max_ndvi": 0.8540000000000001,
+        "sim_index": 0.8131933218556198,
+        "bad": false,
+        "in_low_tertile": false
+      },
+      {
+        "season": 2015,
+        "label": "2015/16",
+        "max_ndvi": 0.7826000000000001,
+        "sim_index": 0.6814247756327898,
+        "bad": false,
+        "in_low_tertile": false
+      },
+      {
+        "season": 2016,
+        "label": "2016/17",
+        "max_ndvi": 0.7160000000000001,
+        "sim_index": 0.5541376279269284,
+        "bad": true,
+        "in_low_tertile": true
+      },
+      {
+        "season": 2017,
+        "label": "2017/18",
+        "max_ndvi": 0.7883,
+        "sim_index": 0.7324117988366645,
+        "bad": false,
+        "in_low_tertile": false
+      },
+      {
+        "season": 2018,
+        "label": "2018/19",
+        "max_ndvi": 0.6516000000000001,
+        "sim_index": 0.7672295944766653,
+        "bad": false,
+        "in_low_tertile": true
+      },
+      {
+        "season": 2019,
+        "label": "2019/20",
+        "max_ndvi": 0.6651,
+        "sim_index": 0.876923879330582,
+        "bad": false,
+        "in_low_tertile": true
+      },
+      {
+        "season": 2020,
+        "label": "2020/21",
+        "max_ndvi": 0.8047000000000001,
+        "sim_index": 0.8093482632829487,
+        "bad": false,
+        "in_low_tertile": false
+      },
+      {
+        "season": 2021,
+        "label": "2021/22",
+        "max_ndvi": 0.7652,
+        "sim_index": 0.7394005648235964,
+        "bad": false,
+        "in_low_tertile": false
+      },
+      {
+        "season": 2022,
+        "label": "2022/23",
+        "max_ndvi": 0.6991,
+        "sim_index": 0.8065899974052241,
+        "bad": false,
+        "in_low_tertile": true
+      },
+      {
+        "season": 2023,
+        "label": "2023/24",
+        "max_ndvi": 0.7857000000000001,
+        "sim_index": 0.6796444875257078,
+        "bad": false,
+        "in_low_tertile": false
+      },
+      {
+        "season": 2024,
+        "label": "2024/25",
+        "max_ndvi": 0.8139000000000001,
+        "sim_index": 0.8063757555310611,
+        "bad": false,
+        "in_low_tertile": false
+      }
+    ],
+    "source": {
+      "dataset": "NASA MODIS (MOD13Q1 v061 — ORNL DAAC 250m 16-day NDVI)",
+      "parameters": [
+        "250m_16_days_NDVI"
+      ],
+      "period": "campañas 2005/06–2024/25"
+    }
+  }
 }

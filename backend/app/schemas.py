@@ -155,8 +155,31 @@ class Meta(BaseModel):
     assumptions: list[str]  # textos de §4.10
 
 
+class ModisSeasonPoint(BaseModel):
+    season: int
+    label: str
+    max_ndvi: float
+    sim_index: float
+    bad: bool
+    in_low_tertile: bool
+
+
+class ModisBacktestOut(BaseModel):
+    spearman_rho: float
+    p_value: float
+    tertile_threshold: float
+    bad_in_low_ndvi_tertile: int
+    total_bad_seasons: int
+    n_seasons: int
+    series: list[ModisSeasonPoint]
+    source: Source
+
+
 class AnalyzeResponse(BaseModel):
     meta: Meta
     climate: list[ClimateMetric]
     climatology: dict[Literal["before", "recent"], Climatology]
     rotations: list[RotationResult]  # orden fijo: actual, adaptada, regenerativa[, diversificada]
+    modis_backtest: ModisBacktestOut | None = None
+
+
